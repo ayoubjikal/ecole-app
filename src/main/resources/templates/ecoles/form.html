@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head(${ecole.etablissement != null ? 'Modifier l\'école' : 'Nouvelle école'})}">
+    <title>Formulaire École</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">
+                <i class="fas fa-school text-primary me-2"></i>
+                <span th:text="${ecole.etablissement != null ? 'Modifier l\'école' : 'Nouvelle école'}"></span>
+            </h1>
+            <a href="/ecoles" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Retour à la liste
+            </a>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/ecoles/save}" th:object="${ecole}" method="post" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="etablissement" class="form-label">Nom de l'établissement <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="etablissement" th:field="*{etablissement}" required>
+                            <div class="invalid-feedback">Le nom de l'établissement est requis.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="academie" class="form-label">Académie</label>
+                            <input type="text" class="form-control" id="academie" th:field="*{academie}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="direction" class="form-label">Direction</label>
+                            <input type="text" class="form-control" id="direction" th:field="*{direction}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="commune" class="form-label">Commune</label>
+                            <input type="text" class="form-control" id="commune" th:field="*{commune}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="numeroDeCompte" class="form-label">Numéro de compte</label>
+                            <input type="text" class="form-control" id="numeroDeCompte" th:field="*{numeroDeCompte}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="dateDeFondationOuRenouvellement" class="form-label">Date de fondation</label>
+                            <input type="date" class="form-control" id="dateDeFondationOuRenouvellement" th:field="*{dateDeFondationOuRenouvellement}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nomDuPresident" class="form-label">Nom du président</label>
+                            <input type="text" class="form-control" id="nomDuPresident" th:field="*{nomDuPresident}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nomDuTresorier" class="form-label">Nom du trésorier</label>
+                            <input type="text" class="form-control" id="nomDuTresorier" th:field="*{nomDuTresorier}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="telephone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="telephone" th:field="*{telephone}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="adresse" class="form-label">Adresse</label>
+                            <input type="text" class="form-control" id="adresse" th:field="*{adresse}">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="/ecoles" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

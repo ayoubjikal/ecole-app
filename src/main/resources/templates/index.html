@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head('Accueil')}">
+    <title>Accueil</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <div class="hero-section">
+        <div class="container">
+            <h1>Système de Gestion d'Équipements Scolaires</h1>
+            <p>Une plateforme moderne pour gérer efficacement les équipements et ressources des établissements scolaires</p>
+            <a href="/ecoles" class="btn btn-light btn-lg me-2">
+                <i class="fas fa-school me-2"></i> Gérer les écoles
+            </a>
+            <a href="/equipements" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-boxes me-2"></i> Voir les équipements
+            </a>
+        </div>
+    </div>
+    
+    <main class="container my-5">
+        <section class="mb-5">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="stats-card stats-card-primary">
+                        <div class="stats-icon">
+                            <i class="fas fa-school"></i>
+                        </div>
+                        <div class="stats-info">
+                            <h3>Écoles</h3>
+                            <p>Gestion des établissements</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="stats-card stats-card-success">
+                        <div class="stats-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stats-info">
+                            <h3>Équipements</h3>
+                            <p>Inventaire et suivi</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="stats-card stats-card-info">
+                        <div class="stats-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <div class="stats-info">
+                            <h3>Suppressions</h3>
+                            <p>Gestion des retraits</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2 class="text-center mb-4">Fonctionnalités Principales</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-school"></i>
+                            </div>
+                            <h3 class="h5">Gestion des Écoles</h3>
+                            <p>Ajoutez, modifiez et consultez les informations des établissements scolaires. Suivez les détails administratifs et les coordonnées.</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-center pb-4">
+                            <a href="/ecoles" class="btn btn-primary">
+                                <i class="fas fa-arrow-right me-2"></i> Gérer les écoles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h3 class="h5">Gestion des Équipements</h3>
+                            <p>Inventoriez, mettez à jour et suivez les équipements des établissements. Gardez une trace précise de tous les matériels par école.</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-center pb-4">
+                            <a href="/equipements" class="btn btn-primary">
+                                <i class="fas fa-arrow-right me-2"></i> Gérer les équipements
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+                            <h3 class="h5">Gestion des Suppressions</h3>
+                            <p>Enregistrez et suivez les suppressions d'équipements avec leurs justifications. Documentez les motifs et gardez un historique complet.</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-center pb-4">
+                            <a href="/suppressions" class="btn btn-primary">
+                                <i class="fas fa-arrow-right me-2"></i> Gérer les suppressions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

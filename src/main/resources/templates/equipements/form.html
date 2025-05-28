@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head(${equipement.code != null ? 'Modifier l\'équipement' : 'Nouvel équipement'})}">
+    <title>Formulaire Équipement</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">
+                <i class="fas fa-boxes text-primary me-2"></i>
+                <span th:text="${equipement.code != null ? 'Modifier l\'équipement' : 'Nouvel équipement'}"></span>
+            </h1>
+            <a href="/equipements" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Retour à la liste
+            </a>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/equipements/save}" th:object="${equipement}" method="post" class="needs-validation" novalidate>
+                    <input type="hidden" th:field="*{code}" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date" th:field="*{date}" required>
+                            <div class="invalid-feedback">La date est requise.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="designation" class="form-label">Désignation <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="designation" th:field="*{designation}" required>
+                            <div class="invalid-feedback">La désignation est requise.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="source_equipment" class="form-label">Source</label>
+                            <input type="text" class="form-control" id="source_equipment" th:field="*{source_equipment}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="etablissement" class="form-label">Établissement <span class="text-danger">*</span></label>
+                            <select class="form-select" id="etablissement" th:field="*{etablissement}" required>
+                                <option value="">Sélectionner un établissement</option>
+                                <option th:each="ecole : ${ecoles}" th:value="${ecole.etablissement}" th:text="${ecole.etablissement}"></option>
+                            </select>
+                            <div class="invalid-feedback">L'établissement est requis.</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="nbr" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="nbr" th:field="*{nbr}" min="1" required>
+                            <div class="invalid-feedback">Le nombre est requis.</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="prix_unitaire" class="form-label">Prix unitaire (DH) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" id="prix_unitaire" th:field="*{prix_unitaire}" required>
+                            <div class="invalid-feedback">Le prix unitaire est requis.</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="somme" class="form-label">Somme totale (DH)</label>
+                            <input type="number" step="0.01" class="form-control" id="somme" th:field="*{somme}" readonly>
+                            <small class="text-muted">Calculé automatiquement</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="specialisation" class="form-label">Spécialisation</label>
+                            <input type="text" class="form-control" id="specialisation" th:field="*{specialisation}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="etat" class="form-label">État</label>
+                            <select class="form-select" id="etat" th:field="*{etat}">
+                                <option value="">Sélectionner un état</option>
+                                <option value="Neuf">Neuf</option>
+                                <option value="Bon état">Bon état</option>
+                                <option value="État moyen">État moyen</option>
+                                <option value="Mauvais état">Mauvais état</option>
+                                <option value="Hors service">Hors service</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="remarque" class="form-label">Remarque</label>
+                            <textarea class="form-control" id="remarque" th:field="*{remarque}" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="/equipements" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calcul automatique de la somme
+            function calculateSum() {
+                const nbr = parseFloat(document.getElementById('nbr').value) || 0;
+                const prix = parseFloat(document.getElementById('prix_unitaire').value) || 0;
+                document.getElementById('somme').value = (nbr * prix).toFixed(2);
+            }
+            
+            document.getElementById('nbr').addEventListener('input', calculateSum);
+            document.getElementById('prix_unitaire').addEventListener('input', calculateSum);
+            
+            // Calcul initial
+            calculateSum();
+        });
+    </script>
+</body>
+</html>

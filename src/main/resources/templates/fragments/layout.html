@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' | Système de Gestion d\'Équipements Scolaires'">Système de Gestion d'Équipements Scolaires</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" th:href="@{/static/images/favicon.ico}">
+    
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link th:href="@{/static/css/styles.css}" rel="stylesheet">
+    
+    <!-- Additional CSS can be included in specific pages -->
+    <th:block th:replace="${links} ?: ~{}"></th:block>
+</head>
+
+<body>
+    <!-- Header / Navbar -->
+    <header th:fragment="header">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <i class="fas fa-school me-2"></i>
+                    <span>Gestion d'Équipements Scolaires</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${currentUri == '/' ? 'active' : ''}" href="/">
+                                <i class="fas fa-home"></i> Accueil
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${currentUri != null && currentUri.startsWith('/ecoles') ? 'active' : ''}" href="/ecoles">
+                                <i class="fas fa-school"></i> Écoles
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${currentUri != null && currentUri.startsWith('/equipements') ? 'active' : ''}" href="/equipements">
+                                <i class="fas fa-boxes"></i> Équipements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${currentUri != null && currentUri.startsWith('/suppressions') ? 'active' : ''}" href="/suppressions">
+                                <i class="fas fa-trash-alt"></i> Suppressions
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Alert Messages -->
+        <div class="container mt-3">
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        <!-- Content will be replaced here -->
+    </main>
+
+    <!-- Footer -->
+    <footer th:fragment="footer" class="footer text-center py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-md-start">
+                    <h5 class="mb-3">Système de Gestion d'Équipements Scolaires</h5>
+                    <p class="mb-0">Ministère de l'Éducation Nationale et de la Formation Professionnelle</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1">© <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> - Tous droits réservés</p>
+                    <p class="small mb-0">Version 2.0</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- JavaScript Dependencies -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
+        
+        <!-- Custom JavaScript -->
+        <script th:src="@{/static/js/main.js}"></script>
+        
+        <!-- Additional Scripts can be included in specific pages -->
+        <th:block th:replace="${scripts} ?: ~{}"></th:block>
+    </footer>
+</body>
+</html>

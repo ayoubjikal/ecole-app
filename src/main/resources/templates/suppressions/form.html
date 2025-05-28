@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head(${suppression.id != null ? 'Modifier la suppression' : 'Nouvelle suppression'})}">
+    <title>Formulaire Suppression</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">
+                <i class="fas fa-trash-alt text-primary me-2"></i>
+                <span th:text="${suppression.id != null ? 'Modifier la suppression' : 'Nouvelle suppression'}"></span>
+            </h1>
+            <a href="/suppressions" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Retour à la liste
+            </a>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/suppressions/save}" th:object="${suppression}" method="post" class="needs-validation" novalidate>
+                    <input type="hidden" th:field="*{id}" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date" th:field="*{date}" required>
+                            <div class="invalid-feedback">La date est requise.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="designation" class="form-label">Désignation <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="designation" th:field="*{designation}" required>
+                            <div class="invalid-feedback">La désignation est requise.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="etablissement" class="form-label">Établissement <span class="text-danger">*</span></label>
+                            <select class="form-select" id="etablissement" th:field="*{etablissement}" required>
+                                <option value="">Sélectionner un établissement</option>
+                                <option th:each="ecole : ${ecoles}" th:value="${ecole.etablissement}" th:text="${ecole.etablissement}"></option>
+                            </select>
+                            <div class="invalid-feedback">L'établissement est requis.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="quantite" class="form-label">Quantité <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="quantite" th:field="*{quantite}" min="1" required>
+                            <div class="invalid-feedback">La quantité est requise.</div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="motif" class="form-label">Motif de suppression <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="motif" th:field="*{motif}" rows="3" required></textarea>
+                            <div class="invalid-feedback">Le motif est requis.</div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="remarque" class="form-label">Remarque</label>
+                            <textarea class="form-control" id="remarque" th:field="*{remarque}" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="/suppressions" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

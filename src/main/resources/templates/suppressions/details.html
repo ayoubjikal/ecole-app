@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head('Détails de la suppression')}">
+    <title>Détails de la suppression</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <main class="container my-4">
+        <div class="details-header mb-4">
+            <h1 class="details-title">
+                <i class="fas fa-trash-alt text-primary me-2"></i>
+                <span th:text="${suppression.designation}"></span>
+            </h1>
+            <div class="details-actions">
+                <a href="/suppressions" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i> Retour
+                </a>
+                <a th:href="@{/suppressions/edit/{id}(id=${suppression.id})}" class="btn btn-primary me-2">
+                    <i class="fas fa-edit me-2"></i> Modifier
+                </a>
+                <a href="#" th:onclick="'return confirmDelete(\'/suppressions/delete/' + ${suppression.id} + '\', \'cette suppression\')'" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i> Supprimer
+                </a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Informations générales
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">ID:</span>
+                                <p class="mb-0" th:text="${suppression.id}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Date:</span>
+                                <p class="mb-0" th:text="${#dates.format(suppression.date, 'dd/MM/yyyy')}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Désignation:</span>
+                                <p class="mb-0" th:text="${suppression.designation}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Établissement:</span>
+                                <p class="mb-0" th:text="${suppression.etablissement}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Quantité:</span>
+                                <p class="mb-0" th:text="${suppression.quantite}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i> Motif de suppression
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p th:text="${suppression.motif}"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-sticky-note me-2"></i> Remarque
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p th:if="${suppression.remarque == null || suppression.remarque.isEmpty()}" class="mb-0 text-muted">
+                            Aucune remarque enregistrée.
+                        </p>
+                        <p th:unless="${suppression.remarque == null || suppression.remarque.isEmpty()}" class="mb-0" th:text="${suppression.remarque}">
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

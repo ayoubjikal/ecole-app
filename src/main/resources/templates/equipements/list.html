@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head('Liste des Équipements')}">
+    <title>Liste des Équipements</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">
+                <i class="fas fa-boxes text-primary me-2"></i> 
+                <span th:text="${etablissement != null ? 'Équipements de ' + etablissement : 'Liste des Équipements'}"></span>
+            </h1>
+            <div>
+                <button onclick="printEquipments()" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-print me-2"></i> Imprimer
+                </button>
+                <a href="/equipements/new" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Ajouter un équipement
+                </a>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label">Date début</label>
+                        <input type="date" id="dateFrom" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label">Date fin</label>
+                        <input type="date" id="dateTo" class="form-control">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button id="filterDates" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-filter me-2"></i> Filtrer
+                        </button>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <a href="/equipements" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-redo me-2"></i> Réinitialiser
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover sortable table-filterable">
+                        <thead>
+                            <tr>
+                                <th data-sort="code">Code</th>
+                                <th data-sort="date">Date</th>
+                                <th data-sort="designation">Désignation</th>
+                                <th data-sort="source">Source</th>
+                                <th data-sort="nbr">Nbr</th>
+                                <th data-sort="prix">Prix Unit.</th>
+                                <th data-sort="somme">Somme</th>
+                                <th data-sort="etablissement">Établissement</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${equipements.empty}">
+                                <td colspan="9" class="text-center">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle me-2"></i> Aucun équipement n'a été trouvé.
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:each="equipement : ${equipements}">
+                                <td th:text="${equipement.code}" data-sort="code"></td>
+                                <td th:text="${#dates.format(equipement.date, 'dd/MM/yyyy')}" 
+                                    th:attr="data-date=${#dates.format(equipement.date, 'yyyy-MM-dd')}" 
+                                    data-sort="date"></td>
+                                <td th:text="${equipement.designation}" data-sort="designation"></td>
+                                <td th:text="${equipement.source_equipment}" data-sort="source"></td>
+                                <td th:text="${equipement.nbr}" data-sort="nbr"></td>
+                                <td th:text="${#numbers.formatDecimal(equipement.prix_unitaire, 1, 2) + ' DH'}" data-sort="prix"></td>
+                                <td th:text="${#numbers.formatDecimal(equipement.somme, 1, 2) + ' DH'}" data-sort="somme"></td>
+                                <td th:text="${equipement.etablissement}" data-sort="etablissement"></td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a th:href="@{/equipements/{id}(id=${equipement.code})}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/equipements/edit/{id}(id=${equipement.code})}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" th:onclick="'return confirmDelete(\'/equipements/delete/' + ${equipement.code} + '\', \'cet équipement\')'" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot th:if="${!equipements.empty}">
+                            <tr class="table-info">
+                                <td colspan="4" class="text-end fw-bold">Total:</td>
+                                <td th:text="${#aggregates.sum(equipements.![nbr])}" class="fw-bold"></td>
+                                <td></td>
+                                <td th:text="${#numbers.formatDecimal(#aggregates.sum(equipements.![somme]), 1, 2) + ' DH'}" class="fw-bold"></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="fas fa-home me-2"></i> Accueil
+            </a>
+            <a th:if="${etablissement != null}" href="/ecoles" class="btn btn-outline-primary">
+                <i class="fas fa-school me-2"></i> Retour aux écoles
+            </a>
+        </div>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

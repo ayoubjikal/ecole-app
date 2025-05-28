@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head('Détails de l\'équipement')}">
+    <title>Détails de l'équipement</title>
+</head>
+<body>
+    <header th:replace="~{fragments/layout :: header}"></header>
+    
+    <main class="container my-4">
+        <div class="details-header mb-4">
+            <h1 class="details-title">
+                <i class="fas fa-boxes text-primary me-2"></i>
+                <span th:text="${equipement.designation}"></span>
+            </h1>
+            <div class="details-actions">
+                <a href="/equipements" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i> Retour
+                </a>
+                <a th:href="@{/equipements/edit/{id}(id=${equipement.code})}" class="btn btn-primary me-2">
+                    <i class="fas fa-edit me-2"></i> Modifier
+                </a>
+                <a href="#" th:onclick="'return confirmDelete(\'/equipements/delete/' + ${equipement.code} + '\', \'cet équipement\')'" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i> Supprimer
+                </a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Informations générales
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Code:</span>
+                                <p class="mb-0" th:text="${equipement.code}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Date:</span>
+                                <p class="mb-0" th:text="${#dates.format(equipement.date, 'dd/MM/yyyy')}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Désignation:</span>
+                                <p class="mb-0" th:text="${equipement.designation}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Source:</span>
+                                <p class="mb-0" th:text="${equipement.source_equipment != null ? equipement.source_equipment : 'Non spécifié'}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Établissement:</span>
+                                <p class="mb-0" th:text="${equipement.etablissement}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Spécialisation:</span>
+                                <p class="mb-0" th:text="${equipement.specialisation != null ? equipement.specialisation : 'Non spécifié'}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">État:</span>
+                                <p class="mb-0" th:text="${equipement.etat != null ? equipement.etat : 'Non spécifié'}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-money-bill-wave me-2"></i> Informations financières
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <span class="details-label">Nombre:</span>
+                                <p class="mb-0" th:text="${equipement.nbr}"></p>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <span class="details-label">Prix unitaire:</span>
+                                <p class="mb-0" th:text="${#numbers.formatDecimal(equipement.prix_unitaire, 1, 2) + ' DH'}"></p>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <span class="details-label">Somme totale:</span>
+                                <p class="mb-0" th:text="${#numbers.formatDecimal(equipement.somme, 1, 2) + ' DH'}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-sticky-note me-2"></i> Remarque
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p th:if="${equipement.remarque == null || equipement.remarque.isEmpty()}" class="mb-0 text-muted">
+                            Aucune remarque enregistrée.
+                        </p>
+                        <p th:unless="${equipement.remarque == null || equipement.remarque.isEmpty()}" class="mb-0" th:text="${equipement.remarque}">
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
