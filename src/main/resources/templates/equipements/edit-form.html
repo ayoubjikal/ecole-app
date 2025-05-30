@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments/layout :: head('Modifier équipement')}">
+    <title>Modifier Équipement</title>
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="fas fa-edit text-primary me-2"></i>
+            Modifier l'équipement <span th:text="${equipement.equipmentId}" class="text-muted"></span>
+        </h1>
+        <a href="/equipements" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Retour à la liste
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form th:action="@{'/equipements/update/' + ${equipement.code}}" method="post" class="needs-validation" novalidate>
+                <!-- Hidden fields to preserve data -->
+                <input type="hidden" name="equipmentId" th:value="${equipement.equipmentId}">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="date" name="date"
+                               th:value="${#dates.format(equipement.date, 'yyyy-MM-dd')}" required>
+                        <div class="invalid-feedback">La date est requise.</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="categoryId" class="form-label">Catégorie <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoryId" name="categoryId" required>
+                            <option value="">Sélectionner une catégorie</option>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.symbol + ' - ' + category.name}"
+                                    th:selected="${category.id == equipement.category.id}"></option>
+                        </select>
+                        <div class="invalid-feedback">La catégorie est requise.</div>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="designation" class="form-label">Désignation <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="designation" name="designation"
+                               th:value="${equipement.designation}" required>
+                        <div class="invalid-feedback">La désignation est requise.</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="source_equipment" class="form-label">Source</label>
+                        <input type="text" class="form-control" id="source_equipment" name="source_equipment"
+                               th:value="${equipement.source_equipment}">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="etablissement" class="form-label">Établissement <span class="text-danger">*</span></label>
+                        <select class="form-select" id="etablissement" name="etablissement" required>
+                            <option value="">Sélectionner un établissement</option>
+                            <option th:each="ecole : ${ecoles}"
+                                    th:value="${ecole.etablissement}"
+                                    th:text="${ecole.etablissement}"
+                                    th:selected="${ecole.etablissement == equipement.etablissement}"></option>
+                        </select>
+                        <div class="invalid-feedback">L'établissement est requis.</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="prix_unitaire" class="form-label">Prix unitaire (DH) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control" id="prix_unitaire" name="prix_unitaire"
+                               th:value="${equipement.prix_unitaire}" required>
+                        <div class="invalid-feedback">Le prix unitaire est requis.</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="somme" class="form-label">Prix Total (DH)</label>
+                        <input type="number" step="0.01" class="form-control" id="somme"
+                               th:value="${equipement.somme}" readonly>
+                        <small class="text-muted">Calculé automatiquement</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="specialisation" class="form-label">Spécialisation</label>
+                        <input type="text" class="form-control" id="specialisation" name="specialisation"
+                               th:value="${equipement.specialisation}">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="etat" class="form-label">État</label>
+                        <select class="form-select" id="etat" name="etat">
+                            <option value="">Sélectionner un état</option>
+                            <option value="Neuf" th:selected="${equipement.etat == 'Neuf'}">Neuf</option>
+                            <option value="Bon état" th:selected="${equipement.etat == 'Bon état'}">Bon état</option>
+                            <option value="État moyen" th:selected="${equipement.etat == 'État moyen'}">État moyen</option>
+                            <option value="Mauvais état" th:selected="${equipement.etat == 'Mauvais état'}">Mauvais état</option>
+                            <option value="Hors service" th:selected="${equipement.etat == 'Hors service'}">Hors service</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label for="remarque" class="form-label">Remarque</label>
+                        <textarea class="form-control" id="remarque" name="remarque" rows="3" th:text="${equipement.remarque}"></textarea>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="/equipements" class="btn btn-outline-secondary me-md-2">
+                        <i class="fas fa-times me-2"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Modifier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calcul automatique de la somme
+        function calculateSum() {
+            const prix = parseFloat(document.getElementById('prix_unitaire').value) || 0;
+            document.getElementById('somme').value = prix.toFixed(2);
+        }
+
+        document.getElementById('prix_unitaire').addEventListener('input', calculateSum);
+
+        // Calcul initial
+        calculateSum();
+    });
+</script>
+</body>
+</html>

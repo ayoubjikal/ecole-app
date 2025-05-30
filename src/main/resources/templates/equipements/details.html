@@ -36,8 +36,15 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <span class="details-label">Code:</span>
-                                <p class="mb-0" th:text="${equipement.code}"></p>
+                                <span class="details-label">ID Équipement:</span>
+                                <p class="mb-0 fw-bold text-primary" th:text="${equipement.equipmentId}"></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Catégorie:</span>
+                                <p class="mb-0">
+                                    <span class="badge bg-info me-2" th:text="${equipement.category.symbol}"></span>
+                                    <span th:text="${equipement.category.name}"></span>
+                                </p>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <span class="details-label">Date:</span>
@@ -75,17 +82,13 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <span class="details-label">Nombre:</span>
-                                <p class="mb-0" th:text="${equipement.nbr}"></p>
-                            </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <span class="details-label">Prix unitaire:</span>
                                 <p class="mb-0" th:text="${#numbers.formatDecimal(equipement.prix_unitaire, 1, 2) + ' DH'}"></p>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <span class="details-label">Somme totale:</span>
-                                <p class="mb-0" th:text="${#numbers.formatDecimal(equipement.somme, 1, 2) + ' DH'}"></p>
+                            <div class="col-md-6 mb-3">
+                                <span class="details-label">Prix total:</span>
+                                <p class="mb-0 fw-bold text-success" th:text="${#numbers.formatDecimal(equipement.somme, 1, 2) + ' DH'}"></p>
                             </div>
                         </div>
                     </div>
