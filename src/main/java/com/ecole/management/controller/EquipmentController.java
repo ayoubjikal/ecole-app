@@ -75,7 +75,15 @@ public class EquipmentController {
         model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
         return "equipements/form";
     }
-
+/*
+    @GetMapping("/new")
+    public String showNewEquipmentForm(Model model) {
+        model.addAttribute("equipementForm", new EquipmentFormDTO());
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+        return "equipements/form";
+    }
+*/
     @GetMapping("/{id}")
     public String showEquipmentDetails(@PathVariable Integer id, Model model) {
         equipmentService.getEquipmentById(id)
