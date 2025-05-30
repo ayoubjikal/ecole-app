@@ -7,6 +7,12 @@
     <header th:replace="~{fragments/layout :: header}"></header>
     
     <main class="container my-4">
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">
                 <i class="fas fa-boxes text-primary me-2"></i> 
@@ -46,7 +52,7 @@
                 </div>
                 
                 <div class="table-responsive">
-                    <table class="table table-hover sortable table-filterable">
+                    <table class="table table-hover sortable table-filterable" id="equipmentTable">
                         <thead>
                             <tr>
                                 <th data-sort="code">Code</th>
@@ -97,9 +103,9 @@
                         <tfoot th:if="${!equipements.empty}">
                             <tr class="table-info">
                                 <td colspan="4" class="text-end fw-bold">Total:</td>
-                                <td th:text="${#aggregates.sum(equipements.![nbr])}" class="fw-bold"></td>
+                                <td th:text="${#aggregates.sum(equipements.![nbr != null ? nbr : 0])}" class="fw-bold"></td>
                                 <td></td>
-                                <td th:text="${#numbers.formatDecimal(#aggregates.sum(equipements.![somme]), 1, 2) + ' DH'}" class="fw-bold"></td>
+                                <td th:text="${#numbers.formatDecimal(#aggregates.sum(equipements.![somme != null ? somme : 0]), 1, 2) + ' DH'}" class="fw-bold"></td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
@@ -119,5 +125,156 @@
     </main>
     
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+    
+    <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the table
+        const table = document.getElementById('equipmentTable');
+        if (table) {
+            // Add loading indicator
+            const loadingRow = document.createElement('tr');
+            loadingRow.innerHTML = '<td colspan="9" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td>';
+            table.querySelector('tbody').appendChild(loadingRow);
+            
+            // Initialize sorting and filtering
+            initializeTableFeatures(table);
+        }
+    });
+
+    function initializeTableFeatures(table) {
+        // Add sorting functionality
+        const headers = table.querySelectorAll('th[data-sort]');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.getAttribute('data-sort');
+                const direction = header.classList.contains('asc') ? 'desc' : 'asc';
+                sortTable(table, column, direction);
+            });
+        });
+    }
+    </script>
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        function printEquipments() {
+            try {
+                // Create a print-friendly version of the current page
+                const printContent = document.querySelector('.table-responsive').cloneNode(true);
+                
+                // Remove the Actions column
+                const table = printContent.querySelector('table');
+                const headers = table.querySelectorAll('th');
+                const rows = table.querySelectorAll('tbody tr');
+                
+                // Remove the last header (Actions)
+                headers[headers.length - 1].remove();
+                
+                // Remove the last cell from each row (Actions buttons)
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    cells[cells.length - 1].remove();
+                });
+
+                const printWindow = document.createElement('div');
+                printWindow.innerHTML = `
+                    <div class="print-container">
+                        <div class="print-header">
+                            <h2>Inventaire des Équipements Scolaires</h2>
+                            <p>Date d'impression: ${new Date().toLocaleDateString()}</p>
+                        </div>
+                        ${printContent.outerHTML}
+                        <div class="print-footer">
+                            <div class="signature-section">
+                                <div class="signature">
+                                    <p>Signature du Directeur:</p>
+                                    <div class="signature-line"></div>
+                                </div>
+                                <div class="signature">
+                                    <p>Signature du Responsable:</p>
+                                    <div class="signature-line"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Add print styles
+                const style = document.createElement('style');
+                style.textContent = `
+                    @media print {
+                        body * {
+                            visibility: hidden;
+                        }
+                        .print-container, .print-container * {
+                            visibility: visible;
+                        }
+                        .print-container {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                        }
+                        .print-header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        .print-header h2 {
+                            color: #000;
+                            margin-bottom: 10px;
+                        }
+                        .table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        .table th, .table td {
+                            border: 1px solid #000;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        .table th {
+                            background-color: #f8f9fa !important;
+                            -webkit-print-color-adjust: exact;
+                        }
+                        .print-footer {
+                            margin-top: 50px;
+                        }
+                        .signature-section {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 50px;
+                        }
+                        .signature {
+                            width: 45%;
+                        }
+                        .signature-line {
+                            border-top: 1px solid #000;
+                            margin-top: 50px;
+                        }
+                        .no-print {
+                            display: none !important;
+                        }
+                        @page {
+                            size: landscape;
+                            margin: 1cm;
+                        }
+                    }
+                `;
+
+                // Add elements to document
+                document.body.appendChild(style);
+                document.body.appendChild(printWindow);
+
+                // Print
+                window.print();
+
+                // Clean up
+                document.body.removeChild(printWindow);
+                document.body.removeChild(style);
+            } catch (error) {
+                console.error('Error printing:', error);
+                alert('Une erreur est survenue lors de l\'impression');
+            }
+        }
+    </script>
 </body>
 </html>

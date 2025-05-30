@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
-<head th:replace="~{fragments/layout :: head('Impression des Équipements')}">
+<head>
     <title>Impression des Équipements</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         @media print {
             body {
@@ -18,13 +20,23 @@
                 size: landscape;
                 margin: 1cm;
             }
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .table th, .table td {
+                border: 1px solid #000;
+                padding: 8px;
+            }
+            .table th {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="no-print" th:replace="~{fragments/layout :: header}"></header>
-    
-    <div class="container my-4">
+    <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4 no-print">
             <h1 class="mb-0">
                 <i class="fas fa-print text-primary me-2"></i> Impression des Équipements
@@ -38,60 +50,56 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- En-tête du document imprimé -->
         <div class="text-center mb-4">
             <h2>Inventaire des Équipements Scolaires</h2>
             <p>Date d'impression: <span th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span></p>
         </div>
-        
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead class="table-primary">
-                            <tr>
-                                <th>Code</th>
-                                <th>Date</th>
-                                <th>Désignation</th>
-                                <th>Source</th>
-                                <th>Établissement</th>
-                                <th>Nbr</th>
-                                <th>Prix Unit. (DH)</th>
-                                <th>Somme (DH)</th>
-                                <th>État</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:if="${equipements.empty}">
-                                <td colspan="9" class="text-center">Aucun équipement n'a été trouvé.</td>
-                            </tr>
-                            <tr th:each="equipement : ${equipements}">
-                                <td th:text="${equipement.code}"></td>
-                                <td th:text="${#dates.format(equipement.date, 'dd/MM/yyyy')}"></td>
-                                <td th:text="${equipement.designation}"></td>
-                                <td th:text="${equipement.source_equipment}"></td>
-                                <td th:text="${equipement.etablissement}"></td>
-                                <td th:text="${equipement.nbr}"></td>
-                                <td th:text="${#numbers.formatDecimal(equipement.prix_unitaire, 1, 2)}"></td>
-                                <td th:text="${#numbers.formatDecimal(equipement.somme, 1, 2)}"></td>
-                                <td th:text="${equipement.etat}"></td>
-                            </tr>
-                        </tbody>
-                        <tfoot th:if="${!equipements.empty}">
-                            <tr>
-                                <td colspan="5" class="text-end fw-bold">Total:</td>
-                                <td th:text="${#aggregates.sum(equipements.![nbr])}" class="fw-bold"></td>
-                                <td></td>
-                                <td th:text="${#numbers.formatDecimal(#aggregates.sum(equipements.![somme]), 1, 2)}" class="fw-bold"></td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Date</th>
+                        <th>Désignation</th>
+                        <th>Source</th>
+                        <th>Établissement</th>
+                        <th>Nbr</th>
+                        <th>Prix Unit. (DH)</th>
+                        <th>Somme (DH)</th>
+                        <th>État</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${equipements.empty}">
+                        <td colspan="9" class="text-center">Aucun équipement n'a été trouvé.</td>
+                    </tr>
+                    <tr th:each="equipement : ${equipements}">
+                        <td th:text="${equipement.code}"></td>
+                        <td th:text="${#dates.format(equipement.date, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${equipement.designation}"></td>
+                        <td th:text="${equipement.source_equipment}"></td>
+                        <td th:text="${equipement.etablissement}"></td>
+                        <td th:text="${equipement.nbr}"></td>
+                        <td th:text="${#numbers.formatDecimal(equipement.prix_unitaire, 1, 2)}"></td>
+                        <td th:text="${#numbers.formatDecimal(equipement.somme, 1, 2)}"></td>
+                        <td th:text="${equipement.etat}"></td>
+                    </tr>
+                </tbody>
+                <tfoot th:if="${!equipements.empty}">
+                    <tr>
+                        <td colspan="5" class="text-end fw-bold">Total:</td>
+                        <td th:text="${#aggregates.sum(equipements.![nbr != null ? nbr : 0])}" class="fw-bold"></td>
+                        <td></td>
+                        <td th:text="${#numbers.formatDecimal(#aggregates.sum(equipements.![somme != null ? somme : 0]), 1, 2)}" class="fw-bold"></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-        
+
         <div class="row mt-5">
             <div class="col-md-6">
                 <p><strong>Signature du Directeur:</strong> ________________________</p>
@@ -101,7 +109,15 @@
             </div>
         </div>
     </div>
-    
-    <footer class="no-print" th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        // Automatically trigger print when page loads
+        window.onload = function() {
+            // Small delay to ensure content is fully loaded
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
 </body>
 </html>

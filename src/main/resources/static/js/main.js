@@ -113,9 +113,111 @@ document.addEventListener('DOMContentLoaded', function() {
         window.print();
     };
     
-    // Open equipment print page
+    // Print equipment list
     window.printEquipments = function() {
-        window.open('/equipements/print', '_blank');
+        try {
+            // Create a print-friendly version of the current page
+            const printContent = document.querySelector('.table-responsive').cloneNode(true);
+            const printWindow = document.createElement('div');
+            printWindow.innerHTML = `
+                <div class="print-container">
+                    <div class="print-header">
+                        <h2>Inventaire des Équipements Scolaires</h2>
+                        <p>Date d'impression: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    ${printContent.outerHTML}
+                    <div class="print-footer">
+                        <div class="signature-section">
+                            <div class="signature">
+                                <p>Signature du Directeur:</p>
+                                <div class="signature-line"></div>
+                            </div>
+                            <div class="signature">
+                                <p>Signature du Responsable:</p>
+                                <div class="signature-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add print styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    .print-container, .print-container * {
+                        visibility: visible;
+                    }
+                    .print-container {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                    .print-header {
+                        text-align: center;
+                        margin-bottom: 20px;
+                    }
+                    .print-header h2 {
+                        color: #000;
+                        margin-bottom: 10px;
+                    }
+                    .table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                    }
+                    .table th, .table td {
+                        border: 1px solid #000;
+                        padding: 8px;
+                        text-align: left;
+                    }
+                    .table th {
+                        background-color: #f8f9fa !important;
+                        -webkit-print-color-adjust: exact;
+                    }
+                    .print-footer {
+                        margin-top: 50px;
+                    }
+                    .signature-section {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 50px;
+                    }
+                    .signature {
+                        width: 45%;
+                    }
+                    .signature-line {
+                        border-top: 1px solid #000;
+                        margin-top: 50px;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                    @page {
+                        size: landscape;
+                        margin: 1cm;
+                    }
+                }
+            `;
+
+            // Add elements to document
+            document.body.appendChild(style);
+            document.body.appendChild(printWindow);
+
+            // Print
+            window.print();
+
+            // Clean up
+            document.body.removeChild(printWindow);
+            document.body.removeChild(style);
+        } catch (error) {
+            console.error('Error printing:', error);
+            alert('Une erreur est survenue lors de l\'impression');
+        }
     };
     
     // Date range filter for tables

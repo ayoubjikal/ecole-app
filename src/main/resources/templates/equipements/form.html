@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
-<head th:replace="~{fragments/layout :: head(${equipement.code != null ? 'Modifier l\'équipement' : 'Nouvel équipement'})}">
+<head th:replace="~{fragments/layout :: head(${equipement.code != null ? 'Modifier l''équipement' : 'Nouvel équipement'})}">
     <title>Formulaire Équipement</title>
 </head>
 <body>
@@ -10,7 +10,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">
                 <i class="fas fa-boxes text-primary me-2"></i>
-                <span th:text="${equipement.code != null ? 'Modifier l\'équipement' : 'Nouvel équipement'}"></span>
+                <span th:text="${equipement.code != null ? 'Modifier l''équipement' : 'Nouvel équipement'}"></span>
             </h1>
             <a href="/equipements" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Retour à la liste
@@ -25,28 +25,34 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="date" th:field="*{date}" required>
-                            <div class="invalid-feedback">La date est requise.</div>
+                            <input type="date" class="form-control" id="date" th:field="*{date}"
+                                   th:classappend="${#fields.hasErrors('date')} ? 'is-invalid' : ''" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></div>
+                            <div class="invalid-feedback" th:unless="${#fields.hasErrors('date')}">La date est requise.</div>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="designation" class="form-label">Désignation <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="designation" th:field="*{designation}" required>
-                            <div class="invalid-feedback">La désignation est requise.</div>
+                            <input type="text" class="form-control" id="designation" th:field="*{designation}"
+                                   th:classappend="${#fields.hasErrors('designation')} ? 'is-invalid' : ''" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('designation')}" th:errors="*{designation}"></div>
+                            <div class="invalid-feedback" th:unless="${#fields.hasErrors('designation')}">La désignation est requise.</div>
                         </div>
                         
                         <div class="col-md-6 mb-3">
                             <label for="source_equipment" class="form-label">Source</label>
                             <input type="text" class="form-control" id="source_equipment" th:field="*{source_equipment}">
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="etablissement" class="form-label">Établissement <span class="text-danger">*</span></label>
-                            <select class="form-select" id="etablissement" th:field="*{etablissement}" required>
+                            <select class="form-select" id="etablissement" th:field="*{etablissement}"
+                                    th:classappend="${#fields.hasErrors('etablissement')} ? 'is-invalid' : ''" required>
                                 <option value="">Sélectionner un établissement</option>
                                 <option th:each="ecole : ${ecoles}" th:value="${ecole.etablissement}" th:text="${ecole.etablissement}"></option>
                             </select>
-                            <div class="invalid-feedback">L'établissement est requis.</div>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('etablissement')}" th:errors="*{etablissement}"></div>
+                            <div class="invalid-feedback" th:unless="${#fields.hasErrors('etablissement')}">L'établissement est requis.</div>
                         </div>
                         
                         <div class="col-md-4 mb-3">
@@ -96,6 +102,9 @@
                         </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i> Enregistrer
+                        </button>
+                        <button onclick="printEquipments()" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-print me-2"></i> Imprimer
                         </button>
                     </div>
                 </form>

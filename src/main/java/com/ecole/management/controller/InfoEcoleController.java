@@ -46,22 +46,30 @@ public class InfoEcoleController {
     }
 
     @PostMapping("/save")
-    public String saveEcole(@Valid @ModelAttribute InfoEcole infoEcole, 
-                            BindingResult result, 
-                            RedirectAttributes redirectAttributes) {
-        
+    public String saveEcole(@Valid @ModelAttribute("ecole") InfoEcole infoEcole,
+                            BindingResult result,
+                            RedirectAttributes redirectAttributes,
+                            Model model) {
+
         if (result.hasErrors()) {
+            model.addAttribute("errorMessage", "Veuillez corriger les erreurs dans le formulaire");
             return "ecoles/form";
         }
-        
-        // Ensure date is set if not provided
-        if (infoEcole.getDateDeFondationOuRenouvellement() == null) {
-            infoEcole.setDateDeFondationOuRenouvellement(new Date());
+
+        try {
+            // Ensure date is set if not provided
+            if (infoEcole.getDateDeFondationOuRenouvellement() == null) {
+                infoEcole.setDateDeFondationOuRenouvellement(new Date());
+            }
+
+            infoEcoleService.saveInfoEcole(infoEcole);
+            redirectAttributes.addFlashAttribute("successMessage", "École enregistrée avec succès");
+            return "redirect:/ecoles";
+
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Erreur lors de l'enregistrement : " + e.getMessage());
+            return "ecoles/form";
         }
-        
-        infoEcoleService.saveInfoEcole(infoEcole);
-        redirectAttributes.addFlashAttribute("successMessage", "École enregistrée avec succès");
-        return "redirect:/ecoles";
     }
 
     @GetMapping("/delete/{etablissement}")
