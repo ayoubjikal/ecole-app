@@ -4,109 +4,325 @@
     <title>Liste des Suppressions</title>
 </head>
 <body>
-    <header th:replace="~{fragments/layout :: header}"></header>
-    
-    <main class="container my-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">
-                <i class="fas fa-trash-alt text-primary me-2"></i> 
-                <span th:text="${etablissement != null ? 'Suppressions de ' + etablissement : 'Liste des Suppressions'}"></span>
-            </h1>
-            <a href="/suppressions/new" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i> Ajouter une suppression
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="container my-4">
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="fas fa-minus-circle text-danger me-2"></i>
+            <span th:text="${etablissement != null ? 'Suppressions de ' + etablissement : 'Liste des Suppressions'}"></span>
+        </h1>
+        <div>
+            <button onclick="printSuppressions()" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-print me-2"></i> Imprimer
+            </button>
+            <a href="/suppressions/new" class="btn btn-danger">
+                <i class="fas fa-plus me-2"></i> Nouvelle Suppression
             </a>
         </div>
-        
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label for="dateFrom" class="form-label">Date début</label>
-                        <input type="date" id="dateFrom" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="dateTo" class="form-label">Date fin</label>
-                        <input type="date" id="dateTo" class="form-control">
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button id="filterDates" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-filter me-2"></i> Filtrer
-                        </button>
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <a href="/suppressions" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-redo me-2"></i> Réinitialiser
-                        </a>
-                    </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="categoryFilter" class="form-label">Catégorie</label>
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">Toutes les catégories</option>
+                        <option th:each="category : ${categories}"
+                                th:value="${category.id}"
+                                th:text="${category.symbol + ' - ' + category.name}"
+                                th:selected="${category.id == selectedCategoryId}"></option>
+                    </select>
                 </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover sortable table-filterable">
-                        <thead>
-                            <tr>
-                                <th data-sort="id">ID</th>
-                                <th data-sort="date">Date</th>
-                                <th data-sort="designation">Désignation</th>
-                                <th data-sort="etablissement">Établissement</th>
-                                <th data-sort="quantite">Quantité</th>
-                                <th data-sort="motif">Motif</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:if="${suppressions.empty}">
-                                <td colspan="7" class="text-center">
-                                    <div class="alert alert-info mb-0">
-                                        <i class="fas fa-info-circle me-2"></i> Aucune suppression n'a été trouvée.
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr th:each="suppression : ${suppressions}">
-                                <td th:text="${suppression.id}" data-sort="id"></td>
-                                <td th:text="${#dates.format(suppression.date, 'dd/MM/yyyy')}" 
-                                    th:attr="data-date=${#dates.format(suppression.date, 'yyyy-MM-dd')}" 
-                                    data-sort="date"></td>
-                                <td th:text="${suppression.designation}" data-sort="designation"></td>
-                                <td th:text="${suppression.etablissement}" data-sort="etablissement"></td>
-                                <td th:text="${suppression.quantite}" data-sort="quantite"></td>
-                                <td th:text="${#strings.abbreviate(suppression.motif, 50)}" data-sort="motif"></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a th:href="@{/suppressions/{id}(id=${suppression.id})}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Voir détails">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a th:href="@{/suppressions/edit/{id}(id=${suppression.id})}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="#" th:onclick="'return confirmDelete(\'/suppressions/delete/' + ${suppression.id} + '\', \'cette suppression\')'" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot th:if="${!suppressions.empty}">
-                            <tr class="table-info">
-                                <td colspan="4" class="text-end fw-bold">Total:</td>
-                                <td th:text="${#aggregates.sum(suppressions.![quantite])}" class="fw-bold"></td>
-                                <td colspan="2"></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="col-md-3">
+                    <label for="etablissementFilter" class="form-label">Établissement</label>
+                    <select id="etablissementFilter" class="form-select">
+                        <option value="">Tous les établissements</option>
+                        <option th:each="ecole : ${ecoles}"
+                                th:value="${ecole.etablissement}"
+                                th:text="${ecole.etablissement}"
+                                th:selected="${ecole.etablissement == selectedEtablissement}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="dateFrom" class="form-label">Date début</label>
+                    <input type="date" id="dateFrom" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label for="dateTo" class="form-label">Date fin</label>
+                    <input type="date" id="dateTo" class="form-control">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button id="filterDates" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-filter me-2"></i> Filtrer
+                    </button>
                 </div>
             </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover" id="suppressionTable">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>ID Équipement</th>
+                        <th>Catégorie</th>
+                        <th>Désignation</th>
+                        <th>Établissement</th>
+                        <th>Prix Unit.</th>
+                        <th>Date Suppression</th>
+                        <th>Motif</th>
+                        <th>Responsable</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${suppressions.empty}">
+                        <td colspan="9" class="text-center">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i> Aucune suppression n'a été trouvée.
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:each="suppression : ${suppressions}">
+                        <td class="fw-bold text-danger" th:text="${suppression.equipmentId}"></td>
+                        <td>
+                            <span class="badge bg-info" th:text="${suppression.equipment.category.symbol}"></span>
+                            <small th:text="${suppression.equipment.category.name}" class="text-muted ms-1"></small>
+                        </td>
+                        <td th:text="${suppression.designation}"></td>
+                        <td th:text="${suppression.etablissement}"></td>
+                        <td th:text="${#numbers.formatDecimal(suppression.prixUnitaire, 1, 2) + ' DH'}"></td>
+                        <td th:text="${#dates.format(suppression.dateSuppression, 'dd/MM/yyyy')}"
+                            th:attr="data-date=${#dates.format(suppression.dateSuppression, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <span th:text="${suppression.motifSuppression}"
+                                  class="text-truncate d-inline-block"
+                                  style="max-width: 200px;"
+                                  th:title="${suppression.motifSuppression}"></span>
+                        </td>
+                        <td th:text="${suppression.responsable ?: 'Non spécifié'}"></td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a th:href="@{/equipements/{id}(id=${suppression.equipment.code})}"
+                                   class="btn btn-sm btn-info"
+                                   data-bs-toggle="tooltip" title="Voir détails équipement">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a th:href="@{/suppressions/{id}(id=${suppression.id})}"
+                                   class="btn btn-sm btn-secondary"
+                                   data-bs-toggle="tooltip" title="Détails suppression">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-warning delete-suppression-btn"
+                                   th:data-url="@{/suppressions/delete/{id}(id=${suppression.id})}"
+                                   th:data-equipment="${suppression.equipmentId}"
+                                   data-bs-toggle="tooltip" title="Annuler suppression">
+                                    <i class="fas fa-undo"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:if="${!suppressions.empty}">
+                    <tr class="table-warning">
+                        <td colspan="4" class="text-end fw-bold">Total suppressions: <span th:text="${suppressions.size()}"></span> | Valeur totale:</td>
+                        <td th:text="${#numbers.formatDecimal(#aggregates.sum(suppressions.![prixUnitaire != null ? prixUnitaire : 0]), 1, 2) + ' DH'}" class="fw-bold"></td>
+                        <td colspan="4"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
-        
-        <div class="d-flex justify-content-between">
-            <a href="/" class="btn btn-outline-secondary">
-                <i class="fas fa-home me-2"></i> Accueil
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i> Accueil
+        </a>
+        <div>
+            <a href="/equipements" class="btn btn-outline-primary me-2">
+                <i class="fas fa-boxes me-2"></i> Voir Équipements
             </a>
-            <a th:if="${etablissement != null}" href="/ecoles" class="btn btn-outline-primary">
-                <i class="fas fa-school me-2"></i> Retour aux écoles
+            <a href="/equipements/supprimes" class="btn btn-outline-danger">
+                <i class="fas fa-eye me-2"></i> Équipements Supprimés
             </a>
         </div>
-    </main>
-    
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category filter
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
+                const categoryId = this.value;
+                const currentUrl = new URL(window.location.href);
+
+                if (categoryId) {
+                    currentUrl.searchParams.set('categoryId', categoryId);
+                } else {
+                    currentUrl.searchParams.delete('categoryId');
+                }
+
+                window.location.href = currentUrl.toString();
+            });
+        }
+
+        // Establishment filter
+        const etablissementFilter = document.getElementById('etablissementFilter');
+        if (etablissementFilter) {
+            etablissementFilter.addEventListener('change', function() {
+                const etablissement = this.value;
+                const currentUrl = new URL(window.location.href);
+
+                if (etablissement) {
+                    currentUrl.searchParams.set('etablissement', etablissement);
+                } else {
+                    currentUrl.searchParams.delete('etablissement');
+                }
+
+                window.location.href = currentUrl.toString();
+            });
+        }
+
+        // Handle delete suppression buttons (reactivate equipment)
+        const deleteButtons = document.querySelectorAll('.delete-suppression-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const deleteUrl = this.getAttribute('data-url');
+                const equipmentId = this.getAttribute('data-equipment');
+
+                if (confirm('Êtes-vous sûr de vouloir annuler la suppression de l\'équipement ' + equipmentId + ' ?\n\nL\'équipement sera réactivé et redeviendra disponible.')) {
+                    // Show loading
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    this.classList.add('disabled');
+
+                    // Navigate to delete URL
+                    window.location.href = deleteUrl;
+                }
+            });
+        });
+
+        // Date filter functionality
+        const filterDatesBtn = document.getElementById('filterDates');
+        if (filterDatesBtn) {
+            filterDatesBtn.addEventListener('click', function() {
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+                const table = document.getElementById('suppressionTable');
+
+                if (!dateFrom && !dateTo) {
+                    alert('Veuillez sélectionner au moins une date.');
+                    return;
+                }
+
+                // Filter table rows based on dates
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const dateCell = row.querySelector('[data-date]');
+                    if (dateCell) {
+                        const rowDate = dateCell.getAttribute('data-date');
+                        let showRow = true;
+
+                        if (dateFrom && rowDate < dateFrom) {
+                            showRow = false;
+                        }
+                        if (dateTo && rowDate > dateTo) {
+                            showRow = false;
+                        }
+
+                        row.style.display = showRow ? '' : 'none';
+                    }
+                });
+            });
+        }
+
+        // Initialize Bootstrap tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+
+    // Print function
+    function printSuppressions() {
+        try {
+            const printContent = document.querySelector('.table-responsive').cloneNode(true);
+            const table = printContent.querySelector('table');
+            const headers = table.querySelectorAll('th');
+            const rows = table.querySelectorAll('tbody tr');
+
+            // Remove the last header (Actions)
+            if (headers.length > 0) {
+                headers[headers.length - 1].remove();
+            }
+
+            // Remove the last cell from each row (Actions buttons)
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 0) {
+                    cells[cells.length - 1].remove();
+                }
+            });
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Liste des Suppressions d'Équipements</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            h2 { color: #dc3545; margin-bottom: 10px; }
+                            p { margin: 5px 0; color: #666; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                            th { background-color: #343a40; color: white; font-weight: bold; }
+                            .badge { background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+                            .fw-bold { font-weight: bold; }
+                            .text-danger { color: #dc3545; }
+                            .table-warning { background-color: #fff3cd; }
+                            @media print {
+                                body { margin: 0; }
+                                table { font-size: 11px; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h2>Liste des Suppressions d'Équipements</h2>
+                        <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+                        <p><strong>Heure d'impression:</strong> ${new Date().toLocaleTimeString('fr-FR')}</p>
+                        ${printContent.outerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+
+        } catch (error) {
+            console.error('Erreur lors de l\'impression:', error);
+            alert('Erreur lors de l\'impression: ' + error.message);
+        }
+    }
+</script>
 </body>
 </html>

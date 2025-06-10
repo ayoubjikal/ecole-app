@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.ecole.management.model.EquipmentStatus;
+
 
 import java.util.Date;
 
@@ -77,5 +79,25 @@ public class Equipment {
         } else {
             this.somme = 0.0;
         }
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EquipmentStatus status = EquipmentStatus.ACTIVE;
+
+    @OneToOne(mappedBy = "equipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Suppression suppression;
+
+    // Add helper methods
+    public boolean isActive() {
+        return status == EquipmentStatus.ACTIVE;
+    }
+
+    public boolean isSupprime() {
+        return status == EquipmentStatus.SUPPRIME;
+    }
+
+    public void markAsSupprime() {
+        this.status = EquipmentStatus.SUPPRIME;
     }
 }

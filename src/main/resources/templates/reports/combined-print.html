@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <title>Rapport Complet - Équipements et Suppressions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 12px;
+        }
+        h1, h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        h1 {
+            font-size: 18px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        h2 {
+            font-size: 16px;
+            color: #dc3545;
+            margin-top: 30px;
+        }
+        .header-info {
+            margin: 10px 0;
+            color: #666;
+        }
+        .stats-section {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+            font-size: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .table-equipment th {
+            background-color: #007bff;
+            color: white;
+        }
+        .table-suppression th {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge {
+            background: #17a2b8;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 8px;
+        }
+        .badge-success { background: #28a745; }
+        .badge-danger { background: #dc3545; }
+        .badge-info { background: #17a2b8; }
+        .fw-bold { font-weight: bold; }
+        .text-success { color: #28a745; }
+        .text-danger { color: #dc3545; }
+        .text-primary { color: #007bff; }
+        .suppressed-row {
+            background-color: #f8d7da;
+            opacity: 0.8;
+        }
+        .section-divider {
+            margin: 30px 0;
+            border-top: 1px solid #ddd;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+            table { font-size: 9px; }
+            th, td { padding: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="no-print" style="margin-bottom: 20px;">
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="fas fa-print"></i> Imprimer
+    </button>
+    <button onclick="window.close()" class="btn btn-secondary">
+        Fermer
+    </button>
+</div>
+
+<h1>Rapport Complet - Inventaire des Équipements</h1>
+
+<div class="header-info">
+    <p><strong>Date du rapport:</strong> <span th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span></p>
+    <p><strong>Heure du rapport:</strong> <span th:text="${#dates.format(#dates.createNow(), 'HH:mm:ss')}"></span></p>
+    <p th:if="${etablissement}"><strong>Établissement:</strong> <span th:text="${etablissement}"></span></p>
+    <p th:if="${category}"><strong>Catégorie:</strong> <span th:text="${category.symbol + ' - ' + category.name}"></span></p>
+</div>
+
+<!-- Statistics Section -->
+<div class="stats-section">
+    <div class="stat-item">
+        <div class="stat-number text-primary" th:text="${equipmentStats.total}">0</div>
+        <div class="stat-label">Total Équipements</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number text-success" th:text="${equipmentStats.active}">0</div>
+        <div class="stat-label">Équipements Actifs</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number text-danger" th:text="${equipmentStats.supprime}">0</div>
+        <div class="stat-label">Équipements Supprimés</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number" th:text="${#numbers.formatDecimal(totalValue, 1, 2)} + ' DH'">0 DH</div>
+        <div class="stat-label">Valeur Totale</div>
+    </div>
+</div>
+
+<!-- Active Equipment Section -->
+<h2>📦 Équipements Actifs</h2>
+<table class="table-equipment">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Catégorie</th>
+        <th>Désignation</th>
+        <th>Date</th>
+        <th>Source</th>
+        <th>Prix Unit.</th>
+        <th>Établissement</th>
+        <th>État</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:if="${activeEquipments.empty}">
+        <td colspan="8" style="text-align: center; font-style: italic;">Aucun équipement actif trouvé</td>
+    </tr>
+    <tr th:each="equipement : ${activeEquipments}">
+        <td class="fw-bold text-primary" th:text="${equipement.equipmentId}"></td>
+        <td>
+            <span class="badge badge-info" th:text="${equipement.category.symbol}"></span>
+            <span th:text="${equipement.category.name}"></span>
+        </td>
+        <td th:text="${equipement.designation}"></td>
+        <td th:text="${#dates.format(equipement.date, 'dd/MM/yyyy')}"></td>
+        <td th:text="${equipement.source_equipment ?: 'N/A'}"></td>
+        <td th:text="${#numbers.formatDecimal(equipement.prix_unitaire, 1, 2) + ' DH'}"></td>
+        <td th:text="${equipement.etablissement}"></td>
+        <td th:text="${equipement.etat ?: 'N/A'}"></td>
+    </tr>
+    </tbody>
+    <tfoot th:if="${!activeEquipments.empty}">
+    <tr style="background-color: #e3f2fd;">
+        <td colspan="5" class="fw-bold" style="text-align: right;">Sous-total Actifs:</td>
+        <td class="fw-bold" th:text="${#numbers.formatDecimal(#aggregates.sum(activeEquipments.![prix_unitaire != null ? prix_unitaire : 0]), 1, 2) + ' DH'}"></td>
+        <td colspan="2"></td>
+    </tr>
+    </tfoot>
+</table>
+
+<div class="section-divider"></div>
+
+<!-- Suppressed Equipment Section -->
+<h2>🗑️ Équipements Supprimés</h2>
+<table class="table-suppression">
+    <thead>
+    <tr>
+        <th>ID Équipement</th>
+        <th>Catégorie</th>
+        <th>Désignation</th>
+        <th>Prix Unit.</th>
+        <th>Date Suppression</th>
+        <th>Motif Suppression</th>
+        <th>Responsable</th>
+        <th>Observations</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:if="${suppressions.empty}">
+        <td colspan="8" style="text-align: center; font-style: italic;">Aucune suppression trouvée</td>
+    </tr>
+    <tr th:each="suppression : ${suppressions}" class="suppressed-row">
+        <td class="fw-bold text-danger" th:text="${suppression.equipmentId}"></td>
+        <td>
+            <span class="badge badge-info" th:text="${suppression.equipment.category.symbol}"></span>
+            <span th:text="${suppression.equipment.category.name}"></span>
+        </td>
+        <td th:text="${suppression.designation}"></td>
+        <td th:text="${#numbers.formatDecimal(suppression.prixUnitaire, 1, 2) + ' DH'}"></td>
+        <td th:text="${#dates.format(suppression.dateSuppression, 'dd/MM/yyyy')}"></td>
+        <td th:text="${suppression.motifSuppression}"></td>
+        <td th:text="${suppression.responsable ?: 'N/A'}"></td>
+        <td th:text="${suppression.observations ?: 'N/A'}"></td>
+    </tr>
+    </tbody>
+    <tfoot th:if="${!suppressions.empty}">
+    <tr style="background-color: #f8d7da;">
+        <td colspan="3" class="fw-bold" style="text-align: right;">Sous-total Supprimés:</td>
+        <td class="fw-bold" th:text="${#numbers.formatDecimal(#aggregates.sum(suppressions.![prixUnitaire != null ? prixUnitaire : 0]), 1, 2) + ' DH'}"></td>
+        <td colspan="4"></td>
+    </tr>
+    </tfoot>
+</table>
+
+<div class="section-divider"></div>
+
+<!-- Summary Section -->
+<h2>📊 Résumé</h2>
+<table style="width: 50%; margin: 0 auto;">
+    <thead>
+    <tr>
+        <th>Catégorie</th>
+        <th>Équipements</th>
+        <th>Actifs</th>
+        <th>Supprimés</th>
+        <th>Valeur Totale</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="category : ${categories}">
+        <td>
+            <span class="badge badge-info" th:text="${category.symbol}"></span>
+            <span th:text="${category.name}"></span>
+        </td>
+        <td th:text="${categorySummary[category.id].total}" style="text-align: center;"></td>
+        <td th:text="${categorySummary[category.id].active}" style="text-align: center;" class="text-success"></td>
+        <td th:text="${categorySummary[category.id].supprime}" style="text-align: center;" class="text-danger"></td>
+        <td th:text="${#numbers.formatDecimal(categorySummary[category.id].value, 1, 2) + ' DH'}" style="text-align: right;"></td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr style="background-color: #f8f9fa; font-weight: bold;">
+        <td>TOTAL GÉNÉRAL</td>
+        <td th:text="${equipmentStats.total}" style="text-align: center;"></td>
+        <td th:text="${equipmentStats.active}" style="text-align: center;" class="text-success"></td>
+        <td th:text="${equipmentStats.supprime}" style="text-align: center;" class="text-danger"></td>
+        <td th:text="${#numbers.formatDecimal(totalValue, 1, 2) + ' DH'}" style="text-align: right;"></td>
+    </tr>
+    </tfoot>
+</table>
+
+<div style="margin-top: 40px; text-align: center; color: #666; font-size: 10px;">
+    <p>Rapport généré automatiquement par le système de gestion d'équipements scolaires</p>
+    <p>© <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}"></span> - Gestion École</p>
+</div>
+</body>
+</html>

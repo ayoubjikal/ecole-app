@@ -26,9 +26,14 @@
             <span th:if="${selectedCategory}" class="badge bg-secondary ms-2" th:text="'Catégorie: ' + ${selectedCategory.symbol + ' - ' + selectedCategory.name}"></span>
         </h1>
         <div>
-            <button onclick="printEquipments()" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-print me-2"></i> Imprimer
-            </button>
+            <div class="btn-group me-2" role="group">
+                <button onclick="printEquipments()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print me-2"></i> Imprimer Liste
+                </button>
+                <button onclick="printCombinedReport()" class="btn btn-outline-primary">
+                    <i class="fas fa-file-alt me-2"></i> Rapport Complet
+                </button>
+            </div>
             <a href="/equipements/new" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i> Ajouter un équipement
             </a>
@@ -38,6 +43,14 @@
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <div class="row mb-3">
+                <div class="col-md-2">
+                    <label for="statusFilter" class="form-label">Statut</label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="ACTIVE" th:selected="${selectedStatus == 'ACTIVE'}">Actifs</option>
+                        <option value="SUPPRIME" th:selected="${selectedStatus == 'SUPPRIME'}">Supprimés</option>
+                    </select>
+                </div>
                 <div class="col-md-3">
                     <label for="categoryFilter" class="form-label">Catégorie</label>
                     <select id="categoryFilter" class="form-select">
@@ -48,51 +61,62 @@
                                 th:selected="${category.id == selectedCategoryId}"></option>
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label for="etablissementFilter" class="form-label">Établissement</label>
+                    <select id="etablissementFilter" class="form-select">
+                        <option value="">Tous les établissements</option>
+                        <option value="Lycee Al Massira" th:selected="${selectedEtablissement == 'Lycee Al Massira'}">Lycee Al Massira</option>
+                        <option value="Lycee Moulay Idriss" th:selected="${selectedEtablissement == 'Lycee Moulay Idriss'}">Lycee Moulay Idriss</option>
+                        <option value="Lycee Ibn Sina" th:selected="${selectedEtablissement == 'Lycee Ibn Sina'}">Lycee Ibn Sina</option>
+                    </select>
+                </div>
                 <div class="col-md-2">
                     <label for="dateFrom" class="form-label">Date début</label>
                     <input type="date" id="dateFrom" class="form-control">
-                </div>
-                <div class="col-md-2">
-                    <label for="dateTo" class="form-label">Date fin</label>
-                    <input type="date" id="dateTo" class="form-control">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button id="filterDates" class="btn btn-outline-primary w-100">
                         <i class="fas fa-filter me-2"></i> Filtrer
                     </button>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <a href="/equipements" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-redo me-2"></i> Réinitialiser
-                    </a>
-                </div>
             </div>
 
             <div class="table-responsive">
-                <table class="table table-hover sortable table-filterable" id="equipmentTable">
-                    <thead>
+                <table class="table table-hover" id="equipmentTable">
+                    <thead class="table-dark">
                     <tr>
-                        <th data-sort="equipmentId">ID Équipement</th>
-                        <th data-sort="category">Catégorie</th>
-                        <th data-sort="date">Date</th>
-                        <th data-sort="designation">Désignation</th>
-                        <th data-sort="source">Source</th>
-                        <th data-sort="prix">Prix Unit.</th>
-                        <th data-sort="somme">Prix Total</th>
-                        <th data-sort="etablissement">Établissement</th>
+                        <th data-sort="equipmentId">ID Équipement <i class="fas fa-sort"></i></th>
+                        <th data-sort="status">Statut</th>
+                        <th data-sort="category">Catégorie <i class="fas fa-sort"></i></th>
+                        <th data-sort="date">Date <i class="fas fa-sort"></i></th>
+                        <th data-sort="designation">Désignation <i class="fas fa-sort"></i></th>
+                        <th data-sort="source">Source <i class="fas fa-sort"></i></th>
+                        <th data-sort="prix">Prix Unit. <i class="fas fa-sort"></i></th>
+                        <th data-sort="somme">Somme <i class="fas fa-sort"></i></th>
+                        <th data-sort="etablissement">Établissement <i class="fas fa-sort"></i></th>
                         <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${equipements.empty}">
-                        <td colspan="9" class="text-center">
+                        <td colspan="10" class="text-center">
                             <div class="alert alert-info mb-0">
                                 <i class="fas fa-info-circle me-2"></i> Aucun équipement n'a été trouvé.
                             </div>
                         </td>
                     </tr>
-                    <tr th:each="equipement : ${equipements}">
+
+                    <tr th:each="equipement : ${equipements}"
+                        th:classappend="${equipement.status.name() == 'SUPPRIME'} ? 'table-secondary' : ''">
                         <td th:text="${equipement.equipmentId}" data-sort="equipmentId" class="fw-bold text-primary"></td>
+                        <td data-sort="status">
+        <span th:if="${equipement.status.name() == 'ACTIVE'}" class="badge bg-success">
+            <i class="fas fa-check-circle me-1"></i>Actif
+        </span>
+                            <span th:if="${equipement.status.name() == 'SUPPRIME'}" class="badge bg-danger">
+            <i class="fas fa-times-circle me-1"></i>Supprimé
+        </span>
+                        </td>
                         <td data-sort="category">
                             <span class="badge bg-info" th:text="${equipement.category.symbol}"></span>
                             <small th:text="${equipement.category.name}" class="text-muted ms-1"></small>
@@ -110,10 +134,13 @@
                                 <a th:href="@{/equipements/{id}(id=${equipement.code})}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Voir détails">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a th:href="@{/equipements/edit/{id}(id=${equipement.code})}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Modifier">
+                                <a th:if="${equipement.status.name() == 'ACTIVE'}" th:href="@{/equipements/edit/{id}(id=${equipement.code})}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="#" class="btn btn-sm btn-danger delete-btn"
+                                <a th:if="${equipement.status.name() == 'SUPPRIME'}" th:href="@{/suppressions}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Voir suppression">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a th:if="${equipement.status.name() == 'ACTIVE'}" href="#" class="btn btn-sm btn-danger delete-btn"
                                    th:data-url="@{/equipements/delete/{id}(id=${equipement.code})}"
                                    th:data-name="${equipement.equipmentId}"
                                    data-bs-toggle="tooltip" title="Supprimer">
@@ -122,10 +149,20 @@
                             </div>
                         </td>
                     </tr>
+
                     </tbody>
                     <tfoot th:if="${!equipements.empty}">
                     <tr class="table-info">
-                        <td colspan="6" class="text-end fw-bold">Total des équipements: <span th:text="${equipements.size()}"></span> | Somme totale:</td>
+                        <td colspan="7" class="text-end fw-bold">
+                            <span th:if="${equipmentPage != null}">
+                                Page actuelle: <span th:text="${equipements.size()}"></span> équipements
+                                | Total général: <span th:text="${equipmentPage.totalElements}"></span> équipements
+                                | Somme page:
+                            </span>
+                            <span th:unless="${equipmentPage != null}">
+                                Total des équipements: <span th:text="${equipements.size()}"></span> | Somme totale:
+                            </span>
+                        </td>
                         <td th:text="${#numbers.formatDecimal(#aggregates.sum(equipements.![somme != null ? somme : 0]), 1, 2) + ' DH'}" class="fw-bold"></td>
                         <td colspan="2"></td>
                     </tr>
@@ -133,6 +170,64 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${equipmentPage != null and equipmentPage.totalPages > 1}" class="d-flex justify-content-center mb-4">
+        <nav aria-label="Navigation de pagination">
+            <ul class="pagination">
+                <!-- First page -->
+                <li class="page-item" th:classappend="${equipmentPage.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/equipements(page=0, size=${equipmentPage.size}, categoryId=${selectedCategoryId}, etablissement=${selectedEtablissement}, status=${selectedStatus})}"
+                       aria-label="Première">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+
+                <!-- Previous page -->
+                <li class="page-item" th:classappend="${!equipmentPage.hasPrevious()} ? 'disabled'">
+                    <a class="page-link" th:href="@{/equipements(page=${equipmentPage.number - 1}, size=${equipmentPage.size}, categoryId=${selectedCategoryId}, etablissement=${selectedEtablissement}, status=${selectedStatus})}"
+                       aria-label="Précédent">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <!-- Page numbers -->
+                <th:block th:with="startPage=${equipmentPage.number > 2 ? equipmentPage.number - 2 : 0}, endPage=${equipmentPage.number + 2 < equipmentPage.totalPages - 1 ? equipmentPage.number + 2 : equipmentPage.totalPages - 1}">
+                    <li th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
+                        class="page-item" th:classappend="${pageNum == equipmentPage.number} ? 'active'">
+                        <a class="page-link" th:href="@{/equipements(page=${pageNum}, size=${equipmentPage.size}, categoryId=${selectedCategoryId}, etablissement=${selectedEtablissement}, status=${selectedStatus})}"
+                           th:text="${pageNum + 1}"></a>
+                    </li>
+                </th:block>
+
+                <!-- Next page -->
+                <li class="page-item" th:classappend="${!equipmentPage.hasNext()} ? 'disabled'">
+                    <a class="page-link" th:href="@{/equipements(page=${equipmentPage.number + 1}, size=${equipmentPage.size}, categoryId=${selectedCategoryId}, etablissement=${selectedEtablissement}, status=${selectedStatus})}"
+                       aria-label="Suivant">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+
+                <!-- Last page -->
+                <li class="page-item" th:classappend="${equipmentPage.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/equipements(page=${equipmentPage.totalPages - 1}, size=${equipmentPage.size}, categoryId=${selectedCategoryId}, etablissement=${selectedEtablissement}, status=${selectedStatus})}"
+                       aria-label="Dernière">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Pagination info -->
+    <div th:if="${equipmentPage != null}" class="d-flex justify-content-center mb-4">
+        <small class="text-muted">
+            Affichage de <span th:text="${equipmentPage.number * equipmentPage.size + 1}"></span>
+            à <span th:text="${equipmentPage.numberOfElements + equipmentPage.number * equipmentPage.size}"></span>
+            sur <span th:text="${equipmentPage.totalElements}"></span> équipements
+            (Page <span th:text="${equipmentPage.number + 1}"></span> sur <span th:text="${equipmentPage.totalPages}"></span>)
+        </small>
     </div>
 
     <div class="d-flex justify-content-between">
@@ -156,14 +251,36 @@
             initializeTableFeatures(table);
         }
 
-        // Initialize category filter
+
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                const status = this.value;
+                const currentUrl = new URL(window.location.href);
+
+                // Clean up all parameters first
+                currentUrl.searchParams.delete('page');
+
+                if (status && status !== '') {
+                    currentUrl.searchParams.set('status', status);
+                } else {
+                    currentUrl.searchParams.delete('status');
+                }
+
+                window.location.href = currentUrl.toString();
+            });
+        }
+
         const categoryFilter = document.getElementById('categoryFilter');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', function() {
                 const categoryId = this.value;
                 const currentUrl = new URL(window.location.href);
 
-                if (categoryId) {
+                // Clean up all parameters first
+                currentUrl.searchParams.delete('page');
+
+                if (categoryId && categoryId !== '') {
                     currentUrl.searchParams.set('categoryId', categoryId);
                 } else {
                     currentUrl.searchParams.delete('categoryId');
@@ -173,6 +290,28 @@
             });
         }
 
+        const etablissementFilter = document.getElementById('etablissementFilter');
+        if (etablissementFilter) {
+            etablissementFilter.addEventListener('change', function() {
+                const etablissement = this.value;
+                const currentUrl = new URL(window.location.href);
+
+                // Clean up all parameters first
+                currentUrl.searchParams.delete('page');
+
+                if (etablissement && etablissement !== '') {
+                    currentUrl.searchParams.set('etablissement', etablissement);
+                } else {
+                    currentUrl.searchParams.delete('etablissement');
+                }
+
+                window.location.href = currentUrl.toString();
+            });
+        }
+
+
+
+
         // Handle delete buttons
         const deleteButtons = document.querySelectorAll('.delete-btn');
         deleteButtons.forEach(button => {
@@ -181,21 +320,10 @@
                 const deleteUrl = this.getAttribute('data-url');
                 const equipmentName = this.getAttribute('data-name');
 
-                if (confirm('Êtes-vous sûr de vouloir supprimer l\'équipement ' + equipmentName + ' ?\n\nCette action est irréversible.')) {
-                    // Show loading
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    this.classList.add('disabled');
-
-                    // Navigate to delete URL
+                if (confirm('Êtes-vous sûr de vouloir supprimer l\'équipement ' + equipmentName + ' ?')) {
                     window.location.href = deleteUrl;
                 }
             });
-        });
-
-        // Initialize Bootstrap tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
         // Date filter functionality
@@ -203,43 +331,42 @@
         if (filterDatesBtn) {
             filterDatesBtn.addEventListener('click', function() {
                 const dateFrom = document.getElementById('dateFrom').value;
-                const dateTo = document.getElementById('dateTo').value;
+                const table = document.getElementById('equipmentTable');
 
-                if (!dateFrom && !dateTo) {
-                    alert('Veuillez sélectionner au moins une date.');
+                if (!dateFrom) {
+                    alert('Veuillez sélectionner une date.');
                     return;
                 }
 
-                // Filter table rows based on dates
+                // Filter table rows based on date
                 const rows = table.querySelectorAll('tbody tr');
                 rows.forEach(row => {
                     const dateCell = row.querySelector('[data-date]');
                     if (dateCell) {
                         const rowDate = dateCell.getAttribute('data-date');
-                        let showRow = true;
-
-                        if (dateFrom && rowDate < dateFrom) {
-                            showRow = false;
-                        }
-                        if (dateTo && rowDate > dateTo) {
-                            showRow = false;
-                        }
-
+                        const showRow = rowDate >= dateFrom;
                         row.style.display = showRow ? '' : 'none';
                     }
                 });
             });
         }
+
+        // Initialize Bootstrap tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
 
     function initializeTableFeatures(table) {
         // Add sorting functionality
         const headers = table.querySelectorAll('th[data-sort]');
         headers.forEach(header => {
-            header.addEventListener('click', () => {
-                const column = header.getAttribute('data-sort');
-                const direction = header.classList.contains('asc') ? 'desc' : 'asc';
-                sortTable(table, column, direction);
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-sort');
+                const currentDirection = this.classList.contains('asc') ? 'desc' : 'asc';
+                sortTable(table, column, currentDirection);
             });
         });
     }
@@ -268,10 +395,35 @@
         });
         table.querySelector(`th[data-sort="${column}"]`).classList.add(direction);
     }
-</script>
+    // Print function for current page only
+    // Print function for ALL data (not just current page)
+    function printEquipments() {
+        // Get current filters
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryId = urlParams.get('categoryId');
+        const etablissement = urlParams.get('etablissement');
+        const status = urlParams.get('status');
 
-<script>
+        // Build print URL with filters but without pagination
+        let printUrl = '/equipements/print/list';
+        const params = new URLSearchParams();
+
+        if (categoryId) params.append('categoryId', categoryId);
+        if (etablissement) params.append('etablissement', etablissement);
+        if (status) params.append('status', status);
+
+        if (params.toString()) {
+            printUrl += '?' + params.toString();
+        }
+
+        console.log('Print URL:', printUrl); // Debug log
+
+        // Open in new window for printing
+        window.open(printUrl, '_blank', 'width=1200,height=800');
+    }
+
     // Print function
+    /*
     function printEquipments() {
         try {
             const printContent = document.querySelector('.table-responsive').cloneNode(true);
@@ -318,6 +470,7 @@
                             <h2>Inventaire des Équipements Scolaires</h2>
                             <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
                             <p><strong>Heure d'impression:</strong> ${new Date().toLocaleTimeString('fr-FR')}</p>
+                            <p><strong>Note:</strong> Cette impression concerne uniquement les équipements de la page actuelle</p>
                             ${printContent.outerHTML}
                         </body>
                     </html>
@@ -333,6 +486,27 @@
             console.error('Erreur lors de l\'impression:', error);
             alert('Erreur lors de l\'impression: ' + error.message);
         }
+    }*/
+
+    function printCombinedReport() {
+        // Get current filters
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryId = urlParams.get('categoryId');
+        const etablissement = urlParams.get('etablissement');
+
+        // Build print URL with filters
+        let printUrl = '/equipements/print/combined';
+        const params = new URLSearchParams();
+
+        if (categoryId) params.append('categoryId', categoryId);
+        if (etablissement) params.append('etablissement', etablissement);
+
+        if (params.toString()) {
+            printUrl += '?' + params.toString();
+        }
+
+        // Open in new window
+        window.open(printUrl, '_blank', 'width=1200,height=800');
     }
 </script>
 </body>

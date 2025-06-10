@@ -4,92 +4,128 @@
     <title>Détails de la suppression</title>
 </head>
 <body>
-    <header th:replace="~{fragments/layout :: header}"></header>
-    
-    <main class="container my-4">
-        <div class="details-header mb-4">
-            <h1 class="details-title">
-                <i class="fas fa-trash-alt text-primary me-2"></i>
-                <span th:text="${suppression.designation}"></span>
-            </h1>
-            <div class="details-actions">
-                <a href="/suppressions" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-arrow-left me-2"></i> Retour
-                </a>
-                <a th:href="@{/suppressions/edit/{id}(id=${suppression.id})}" class="btn btn-primary me-2">
-                    <i class="fas fa-edit me-2"></i> Modifier
-                </a>
-                <a href="#" th:onclick="'return confirmDelete(\'/suppressions/delete/' + ${suppression.id} + '\', \'cette suppression\')'" class="btn btn-danger">
-                    <i class="fas fa-trash me-2"></i> Supprimer
-                </a>
-            </div>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="container my-4">
+    <div class="details-header mb-4">
+        <h1 class="details-title">
+            <i class="fas fa-trash-alt text-danger me-2"></i>
+            Suppression de <span th:text="${suppression.designation}"></span>
+        </h1>
+        <div class="details-actions">
+            <a href="/suppressions" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i> Retour
+            </a>
+            <a th:href="@{/equipements/{id}(id=${suppression.equipment.code})}" class="btn btn-info me-2">
+                <i class="fas fa-box me-2"></i> Voir Équipement
+            </a>
+            <a href="#" class="btn btn-warning delete-suppression-btn"
+               th:data-url="@{/suppressions/delete/{id}(id=${suppression.id})}"
+               th:data-equipment="${suppression.equipmentId}">
+                <i class="fas fa-undo me-2"></i> Annuler Suppression
+            </a>
         </div>
-        
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h2 class="h5 mb-0">
-                            <i class="fas fa-info-circle me-2"></i> Informations générales
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <span class="details-label">ID:</span>
-                                <p class="mb-0" th:text="${suppression.id}"></p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <span class="details-label">Date:</span>
-                                <p class="mb-0" th:text="${#dates.format(suppression.date, 'dd/MM/yyyy')}"></p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <span class="details-label">Désignation:</span>
-                                <p class="mb-0" th:text="${suppression.designation}"></p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <span class="details-label">Établissement:</span>
-                                <p class="mb-0" th:text="${suppression.etablissement}"></p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <span class="details-label">Quantité:</span>
-                                <p class="mb-0" th:text="${suppression.quantite}"></p>
-                            </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-info-circle me-2"></i> Informations de l'équipement
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">ID Équipement:</span>
+                            <p class="mb-0 text-danger fw-bold" th:text="${suppression.equipmentId}"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">Date Suppression:</span>
+                            <p class="mb-0" th:text="${#dates.format(suppression.dateSuppression, 'dd/MM/yyyy')}"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">Désignation:</span>
+                            <p class="mb-0" th:text="${suppression.designation}"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">Établissement:</span>
+                            <p class="mb-0" th:text="${suppression.etablissement}"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">Prix Unitaire:</span>
+                            <p class="mb-0" th:text="${#numbers.formatDecimal(suppression.prixUnitaire, 1, 2) + ' DH'}"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">Catégorie:</span>
+                            <p class="mb-0">
+                                <span class="badge bg-info" th:text="${suppression.equipment.category.symbol}"></span>
+                                <span th:text="${suppression.equipment.category.name}" class="ms-2"></span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="details-label fw-bold">Responsable:</span>
+                            <p class="mb-0" th:text="${suppression.responsable ?: 'Non spécifié'}"></p>
                         </div>
                     </div>
                 </div>
-                
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h2 class="h5 mb-0">
-                            <i class="fas fa-clipboard-list me-2"></i> Motif de suppression
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <p th:text="${suppression.motif}"></p>
-                    </div>
-                </div>
             </div>
-            
-            <div class="col-lg-4">
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h2 class="h5 mb-0">
-                            <i class="fas fa-sticky-note me-2"></i> Remarque
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <p th:if="${suppression.remarque == null || suppression.remarque.isEmpty()}" class="mb-0 text-muted">
-                            Aucune remarque enregistrée.
-                        </p>
-                        <p th:unless="${suppression.remarque == null || suppression.remarque.isEmpty()}" class="mb-0" th:text="${suppression.remarque}">
-                        </p>
-                    </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i> Motif de suppression
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p th:text="${suppression.motifSuppression}"></p>
                 </div>
             </div>
         </div>
-    </main>
-    
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-sticky-note me-2"></i> Observations
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p th:if="${suppression.observations == null || suppression.observations.isEmpty()}" class="mb-0 text-muted">
+                        Aucune observation enregistrée.
+                    </p>
+                    <p th:unless="${suppression.observations == null || suppression.observations.isEmpty()}" class="mb-0" th:text="${suppression.observations}">
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete suppression button (reactivate equipment)
+        const deleteButton = document.querySelector('.delete-suppression-btn');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                const deleteUrl = this.getAttribute('data-url');
+                const equipmentId = this.getAttribute('data-equipment');
+
+                if (confirm('Êtes-vous sûr de vouloir annuler la suppression de l\'équipement ' + equipmentId + ' ?\n\nL\'équipement sera réactivé et redeviendra disponible.')) {
+                    // Show loading
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Annulation...';
+                    this.classList.add('disabled');
+
+                    // Navigate to delete URL
+                    window.location.href = deleteUrl;
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

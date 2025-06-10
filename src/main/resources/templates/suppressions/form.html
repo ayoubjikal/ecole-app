@@ -1,80 +1,223 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
-<head th:replace="~{fragments/layout :: head(${suppression.id != null ? 'Modifier la suppression' : 'Nouvelle suppression'})}">
-    <title>Formulaire Suppression</title>
+<head th:replace="~{fragments/layout :: head('Nouvelle Suppression')}">
+    <title>Nouvelle Suppression</title>
 </head>
 <body>
-    <header th:replace="~{fragments/layout :: header}"></header>
-    
-    <main class="container my-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">
-                <i class="fas fa-trash-alt text-primary me-2"></i>
-                <span th:text="${suppression.id != null ? 'Modifier la suppression' : 'Nouvelle suppression'}"></span>
-            </h1>
-            <a href="/suppressions" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i> Retour à la liste
-            </a>
-        </div>
-        
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form th:action="@{/suppressions/save}" th:object="${suppression}" method="post" class="needs-validation" novalidate>
-                    <input type="hidden" th:field="*{id}" />
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="date" th:field="*{date}" required>
-                            <div class="invalid-feedback">La date est requise.</div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="designation" class="form-label">Désignation <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="designation" th:field="*{designation}" required>
-                            <div class="invalid-feedback">La désignation est requise.</div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="etablissement" class="form-label">Établissement <span class="text-danger">*</span></label>
-                            <select class="form-select" id="etablissement" th:field="*{etablissement}" required>
-                                <option value="">Sélectionner un établissement</option>
-                                <option th:each="ecole : ${ecoles}" th:value="${ecole.etablissement}" th:text="${ecole.etablissement}"></option>
-                            </select>
-                            <div class="invalid-feedback">L'établissement est requis.</div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="quantite" class="form-label">Quantité <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="quantite" th:field="*{quantite}" min="1" required>
-                            <div class="invalid-feedback">La quantité est requise.</div>
-                        </div>
-                        
-                        <div class="col-12 mb-3">
-                            <label for="motif" class="form-label">Motif de suppression <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="motif" th:field="*{motif}" rows="3" required></textarea>
-                            <div class="invalid-feedback">Le motif est requis.</div>
-                        </div>
-                        
-                        <div class="col-12 mb-3">
-                            <label for="remarque" class="form-label">Remarque</label>
-                            <textarea class="form-control" id="remarque" th:field="*{remarque}" rows="2"></textarea>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="fas fa-minus-circle text-danger me-2"></i>
+            Nouvelle Suppression d'Équipement
+        </h1>
+        <a href="/suppressions" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Retour à la liste
+        </a>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row">
+        <!-- Equipment Selection -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>Sélection Équipement</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="etablissementFilter" class="form-label">Filtrer par établissement</label>
+                        <select id="etablissementFilter" class="form-select">
+                            <option value="">Tous les établissements</option>
+                            <option th:each="ecole : ${ecoles}"
+                                    th:value="${ecole.etablissement}"
+                                    th:text="${ecole.etablissement}"
+                                    th:selected="${ecole.etablissement == selectedEtablissement}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Équipements disponibles</label>
+                        <div id="equipmentList" class="list-group" style="max-height: 400px; overflow-y: auto;">
+                            <div th:each="equipment : ${availableEquipments}"
+                                 class="list-group-item list-group-item-action equipment-item"
+                                 th:data-id="${equipment.code}"
+                                 th:data-establishment="${equipment.etablissement}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1" th:text="${equipment.equipmentId}"></h6>
+                                        <p class="mb-1" th:text="${equipment.designation}"></p>
+                                        <small>
+                                            <span class="badge bg-info me-1" th:text="${equipment.category.symbol}"></span>
+                                            <span th:text="${equipment.etablissement}"></span>
+                                        </small>
+                                    </div>
+                                    <small th:text="${#numbers.formatDecimal(equipment.prix_unitaire, 1, 2) + ' DH'}"></small>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a href="/suppressions" class="btn btn-outline-secondary me-md-2">
-                            <i class="fas fa-times me-2"></i> Annuler
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i> Enregistrer
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
-    </main>
-    
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+        <!-- Suppression Form -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Détails de la Suppression</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/suppressions/save}" th:object="${suppressionForm}" method="post" class="needs-validation" novalidate>
+
+                        <!-- Hidden Equipment ID -->
+                        <input type="hidden" th:field="*{equipmentId}" id="selectedEquipmentId">
+
+                        <!-- Equipment Details (Read-only) -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2">Équipement Sélectionné</h6>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted">ID Équipement</label>
+                                <input type="text" class="form-control-plaintext fw-bold text-primary" id="displayEquipmentId" readonly placeholder="Sélectionnez un équipement">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted">Catégorie</label>
+                                <input type="text" class="form-control-plaintext" id="displayCategory" readonly>
+                            </div>
+                            <div class="col-md-12 mb-2">
+                                <label class="form-label text-muted">Désignation</label>
+                                <input type="text" class="form-control-plaintext" id="displayDesignation" readonly>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted">Établissement</label>
+                                <input type="text" class="form-control-plaintext" id="displayEtablissement" readonly>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label text-muted">Prix Unitaire</label>
+                                <input type="text" class="form-control-plaintext" id="displayPrixUnitaire" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Suppression Details -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-danger border-bottom pb-2">Informations de Suppression</h6>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="dateSuppression" class="form-label">Date de suppression <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="dateSuppression" th:field="*{dateSuppression}"
+                                       th:classappend="${#fields.hasErrors('dateSuppression')} ? 'is-invalid' : ''" required>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('dateSuppression')}" th:errors="*{dateSuppression}"></div>
+                                <div class="invalid-feedback" th:unless="${#fields.hasErrors('dateSuppression')}">La date de suppression est requise.</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="responsable" class="form-label">Responsable</label>
+                                <input type="text" class="form-control" id="responsable" th:field="*{responsable}"
+                                       th:classappend="${#fields.hasErrors('responsable')} ? 'is-invalid' : ''">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('responsable')}" th:errors="*{responsable}"></div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="motifSuppression" class="form-label">Motif de suppression <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="motifSuppression" th:field="*{motifSuppression}" rows="3"
+                                          th:classappend="${#fields.hasErrors('motifSuppression')} ? 'is-invalid' : ''" required></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('motifSuppression')}" th:errors="*{motifSuppression}"></div>
+                                <div class="invalid-feedback" th:unless="${#fields.hasErrors('motifSuppression')}">Le motif de suppression est requis.</div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="observations" class="form-label">Observations</label>
+                                <textarea class="form-control" id="observations" th:field="*{observations}" rows="3"
+                                          th:classappend="${#fields.hasErrors('observations')} ? 'is-invalid' : ''"></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('observations')}" th:errors="*{observations}"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="/suppressions" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-2"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="submitBtn" disabled>
+                                <i class="fas fa-save me-2"></i> Enregistrer la Suppression
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const equipmentItems = document.querySelectorAll('.equipment-item');
+        const etablissementFilter = document.getElementById('etablissementFilter');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Set today's date as default
+        document.getElementById('dateSuppression').value = new Date().toISOString().split('T')[0];
+
+        // Equipment selection
+        equipmentItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all items
+                equipmentItems.forEach(i => i.classList.remove('active'));
+
+                // Add active class to selected item
+                this.classList.add('active');
+
+                // Get equipment details
+                const equipmentId = this.getAttribute('data-id');
+
+                // Fetch equipment details via AJAX
+                fetch(`/suppressions/api/equipment/${equipmentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Populate form fields
+                        document.getElementById('selectedEquipmentId').value = equipmentId;
+                        document.getElementById('displayEquipmentId').value = data.equipmentId;
+                        document.getElementById('displayCategory').value = data.categorySymbol + ' - ' + data.category;
+                        document.getElementById('displayDesignation').value = data.designation;
+                        document.getElementById('displayEtablissement').value = data.etablissement;
+                        document.getElementById('displayPrixUnitaire').value = data.prixUnitaire + ' DH';
+
+                        // Enable submit button
+                        submitBtn.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching equipment details:', error);
+                        alert('Erreur lors du chargement des détails de l\'équipement');
+                    });
+            });
+        });
+
+        // Establishment filter
+        etablissementFilter.addEventListener('change', function() {
+            const selectedEtablissement = this.value;
+
+            equipmentItems.forEach(item => {
+                const itemEtablissement = item.getAttribute('data-establishment');
+
+                if (selectedEtablissement === '' || itemEtablissement === selectedEtablissement) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>
