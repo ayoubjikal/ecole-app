@@ -63,11 +63,15 @@
                 </div>
                 <div class="col-md-3">
                     <label for="etablissementFilter" class="form-label">Établissement</label>
-                    <select id="etablissementFilter" class="form-select">
+                    <select id="etablissementFilter" class="form-select" >
                         <option value="">Tous les établissements</option>
-                        <option value="Lycee Al Massira" th:selected="${selectedEtablissement == 'Lycee Al Massira'}">Lycee Al Massira</option>
+                       <option value="Lycee Al Massira" th:selected="${selectedEtablissement == 'Lycee Al Massira'}">Lycee Al Massira</option>
                         <option value="Lycee Moulay Idriss" th:selected="${selectedEtablissement == 'Lycee Moulay Idriss'}">Lycee Moulay Idriss</option>
                         <option value="Lycee Ibn Sina" th:selected="${selectedEtablissement == 'Lycee Ibn Sina'}">Lycee Ibn Sina</option>
+ <!--
+                        <option th:each="ecole : ${ecoles}" th:value="${ecole.etablissement}" th:text="${ecole.etablissement}"></option>
+
+                        -->
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -422,71 +426,7 @@
         window.open(printUrl, '_blank', 'width=1200,height=800');
     }
 
-    // Print function
-    /*
-    function printEquipments() {
-        try {
-            const printContent = document.querySelector('.table-responsive').cloneNode(true);
-            const table = printContent.querySelector('table');
-            const headers = table.querySelectorAll('th');
-            const rows = table.querySelectorAll('tbody tr');
 
-            // Remove the last header (Actions)
-            if (headers.length > 0) {
-                headers[headers.length - 1].remove();
-            }
-
-            // Remove the last cell from each row (Actions buttons)
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length > 0) {
-                    cells[cells.length - 1].remove();
-                }
-            });
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Inventaire des Équipements</title>
-                            <style>
-                                body { font-family: Arial, sans-serif; margin: 20px; }
-                                h2 { color: #333; margin-bottom: 10px; }
-                                p { margin: 5px 0; color: #666; }
-                                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-                                th { background-color: #f2f2f2; font-weight: bold; }
-                                .badge { background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
-                                .fw-bold { font-weight: bold; }
-                                .text-primary { color: #007bff; }
-                                .table-info { background-color: #d1ecf1; }
-                                @media print {
-                                    body { margin: 0; }
-                                    table { font-size: 11px; }
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            <h2>Inventaire des Équipements Scolaires</h2>
-                            <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
-                            <p><strong>Heure d'impression:</strong> ${new Date().toLocaleTimeString('fr-FR')}</p>
-                            <p><strong>Note:</strong> Cette impression concerne uniquement les équipements de la page actuelle</p>
-                            ${printContent.outerHTML}
-                        </body>
-                    </html>
-                `);
-            printWindow.document.close();
-
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 250);
-
-        } catch (error) {
-            console.error('Erreur lors de l\'impression:', error);
-            alert('Erreur lors de l\'impression: ' + error.message);
-        }
-    }*/
 
     function printCombinedReport() {
         // Get current filters
