@@ -1,12 +1,10 @@
 package com.ecole.management.service;
 
-import com.ecole.management.model.Equipment;
-import com.ecole.management.model.Category;
+import com.ecole.management.model.*;
 import com.ecole.management.repository.EquipmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ecole.management.model.EquipmentStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +17,7 @@ public class EquipmentService {
 
     private final EquipmentRepository equipmentRepository;
     private final SequenceService sequenceService;
+    private final InfoEcoleService infoEcoleService;
 
     @Transactional(readOnly = true)
     public List<Equipment> getAllEquipments() {
@@ -211,5 +210,26 @@ public class EquipmentService {
     @Transactional(readOnly = true)
     public List<Equipment> getEquipmentsByStatusAndCategoryAndEtablissement(EquipmentStatus status, Category category, String etablissement) {
         return equipmentRepository.findByStatusAndCategoryAndEtablissement(status, category, etablissement);
+    }
+
+    // Méthodes orientées utilisateur
+    public List<Equipment> getAllEquipmentsForCurrentUser(User user) {
+        if (user == null) return List.of();
+
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(user);
+        if (userEcole.isPresent()) {
+            return getEquipmentsByEtablissement(userEcole.get().getEtablissement());
+        }
+        return List.of();
+    }
+
+    public Page<Equipment> getAllEquipmentsPaginatedForCurrentUser(User user, Pageable pageable) {
+        if (user == null) return Page.empty(pageable);
+
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(user);
+        if (userEcole.isPresent()) {
+            return getEquipmentsByEtablissementPaginated(userEcole.get().getEtablissement(), pageable);
+        }
+        return Page.empty(pageable);
     }
 }

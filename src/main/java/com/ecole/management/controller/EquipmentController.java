@@ -1,9 +1,6 @@
 package com.ecole.management.controller;
 
-import com.ecole.management.model.Equipment;
-import com.ecole.management.model.EquipmentFormDTO;
-import com.ecole.management.model.Category;
-import com.ecole.management.model.Suppression;
+import com.ecole.management.model.*;
 import com.ecole.management.service.EquipmentService;
 import com.ecole.management.service.CategoryService;
 import com.ecole.management.service.InfoEcoleService;
@@ -15,7 +12,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.ecole.management.model.EquipmentStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -24,7 +20,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import com.ecole.management.service.UserService;
-import com.ecole.management.model.User;
+
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/equipements")
 @RequiredArgsConstructor
@@ -44,6 +42,26 @@ public class EquipmentController {
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "25") int size) {
         try {
+            // SÉCURITÉ : Vérifier que l'utilisateur est connecté
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                return "redirect:/login";
+            }
+
+            // SÉCURITÉ : Vérifier que l'utilisateur a une école
+            Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+            if (!userEcole.isPresent()) {
+                model.addAttribute("errorMessage", "Vous devez d'abord créer une école pour gérer des équipements.");
+                model.addAttribute("equipements", List.of());
+                Page<Equipment> emptyPage = Page.empty(PageRequest.of(0, size));
+                model.addAttribute("equipmentPage", emptyPage);
+                model.addAttribute("categories", categoryService.getAllCategories());
+                model.addAttribute("etablissements", List.of());
+                return "equipements/list";
+            }
+
+            String userEtablissement = userEcole.get().getEtablissement();
+
             // Clean up empty string parameters to null
             if (etablissement != null && etablissement.trim().isEmpty()) {
                 etablissement = null;
@@ -52,9 +70,16 @@ public class EquipmentController {
                 status = null;
             }
 
+            // SÉCURITÉ : Forcer l'établissement de l'utilisateur connecté
+            if (etablissement != null && !etablissement.equals(userEtablissement)) {
+                // Si l'utilisateur essaie d'accéder aux données d'un autre établissement, rediriger
+                return "redirect:/equipements";
+            }
+            etablissement = userEtablissement; // Toujours utiliser l'établissement de l'utilisateur
+
             // Ensure page is not negative
             page = Math.max(0, page);
-            size = Math.max(1, Math.min(100, size)); // Limit size between 1 and 100
+            size = Math.max(1, Math.min(100, size));
 
             // Create Pageable object for pagination
             Pageable pageable = PageRequest.of(page, size, Sort.by("equipmentId").ascending());
@@ -67,96 +92,76 @@ public class EquipmentController {
                 try {
                     equipmentStatus = EquipmentStatus.valueOf(status.toUpperCase());
                 } catch (IllegalArgumentException e) {
-                    equipmentStatus = null; // Default to all if invalid status
+                    equipmentStatus = null;
                 }
             }
 
-            // Filter logic with status and pagination
-            if (categoryId != null && etablissement != null && equipmentStatus != null) {
+            // Filter logic TOUJOURS limité à l'établissement de l'utilisateur
+            if (categoryId != null && equipmentStatus != null) {
                 Category category = categoryService.getCategoryById(categoryId).orElse(null);
                 if (category != null) {
                     equipmentPage = equipmentService.getEquipmentsByStatusAndCategoryAndEtablissementPaginated(equipmentStatus, category, etablissement, pageable);
                 } else {
                     equipmentPage = equipmentService.getEquipmentsByStatusAndEtablissementPaginated(equipmentStatus, etablissement, pageable);
                 }
-            } else if (categoryId != null && equipmentStatus != null) {
-                Category category = categoryService.getCategoryById(categoryId).orElse(null);
-                if (category != null) {
-                    equipmentPage = equipmentService.getEquipmentsByStatusAndCategoryPaginated(equipmentStatus, category, pageable);
-                } else {
-                    equipmentPage = equipmentService.getEquipmentsByStatusPaginated(equipmentStatus, pageable);
-                }
-            } else if (etablissement != null && equipmentStatus != null) {
-                equipmentPage = equipmentService.getEquipmentsByStatusAndEtablissementPaginated(equipmentStatus, etablissement, pageable);
-            } else if (equipmentStatus != null) {
-                equipmentPage = equipmentService.getEquipmentsByStatusPaginated(equipmentStatus, pageable);
-            } else if (categoryId != null && etablissement != null) {
+            } else if (categoryId != null) {
                 Category category = categoryService.getCategoryById(categoryId).orElse(null);
                 if (category != null) {
                     equipmentPage = equipmentService.getEquipmentsByCategoryAndEtablissementPaginated(category, etablissement, pageable);
                 } else {
                     equipmentPage = equipmentService.getEquipmentsByEtablissementPaginated(etablissement, pageable);
                 }
-            } else if (categoryId != null) {
-                Category category = categoryService.getCategoryById(categoryId).orElse(null);
-                if (category != null) {
-                    equipmentPage = equipmentService.getEquipmentsByCategoryPaginated(category, pageable);
-                } else {
-                    equipmentPage = equipmentService.getAllEquipmentsPaginated(pageable);
-                }
-            } else if (etablissement != null) {
-                equipmentPage = equipmentService.getEquipmentsByEtablissementPaginated(etablissement, pageable);
+            } else if (equipmentStatus != null) {
+                equipmentPage = equipmentService.getEquipmentsByStatusAndEtablissementPaginated(equipmentStatus, etablissement, pageable);
             } else {
-                equipmentPage = equipmentService.getAllEquipmentsPaginated(pageable);
+                // CAS PAR DÉFAUT : Afficher tous les équipements de l'établissement de l'utilisateur
+                equipmentPage = equipmentService.getEquipmentsByEtablissementPaginated(etablissement, pageable);
             }
 
             // Make sure we have valid equipmentPage
             if (equipmentPage == null) {
-                equipmentPage = equipmentService.getAllEquipmentsPaginated(pageable);
+                equipmentPage = equipmentService.getEquipmentsByEtablissementPaginated(etablissement, pageable);
             }
 
             model.addAttribute("equipements", equipmentPage.getContent());
             model.addAttribute("equipmentPage", equipmentPage);
             model.addAttribute("categories", categoryService.getAllCategories());
-
-// Ajouter les établissements dynamiques basés sur l'utilisateur connecté
-            User currentUser = userService.getCurrentUser();
-            if (currentUser != null) {
-                model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
-            } else {
-                model.addAttribute("etablissements", List.of());
-            }
-
+            model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
             model.addAttribute("selectedCategoryId", categoryId);
             model.addAttribute("selectedEtablissement", etablissement);
             model.addAttribute("selectedStatus", status);
             model.addAttribute("currentPage", page);
             model.addAttribute("pageSize", size);
 
-            // Debug information for pagination
-            System.out.println("DEBUG - Pagination: page=" + page + ", size=" + size +
-                    ", totalPages=" + equipmentPage.getTotalPages() +
-                    ", totalElements=" + equipmentPage.getTotalElements() +
-                    ", hasContent=" + equipmentPage.hasContent() +
-                    ", categoryId=" + categoryId + ", etablissement='" + etablissement + "', status='" + status + "'");
-
             return "equipements/list";
         } catch (Exception e) {
-            e.printStackTrace(); // Debug print
+            e.printStackTrace();
             model.addAttribute("errorMessage", "Erreur lors du chargement des équipements: " + e.getMessage());
-            model.addAttribute("categories", categoryService.getAllCategories());
-            // Provide empty page for error case
-            Page<Equipment> emptyPage = Page.empty(PageRequest.of(0, size));
-            model.addAttribute("equipements", emptyPage.getContent());
-            model.addAttribute("equipmentPage", emptyPage);
-            return "equipements/list";
+            return "redirect:/";
         }
     }
 
     @GetMapping("/supprimes")
     public String listSupprimedEquipments(Model model) {
-        model.addAttribute("equipements", equipmentService.getSupprimedEquipments());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+        if (userEcole.isPresent()) {
+            String etablissement = userEcole.get().getEtablissement();
+            List<Equipment> supprimedEquipments = equipmentService.getEquipmentsByEtablissement(etablissement)
+                    .stream()
+                    .filter(eq -> eq.getStatus() == EquipmentStatus.SUPPRIME)
+                    .collect(Collectors.toList());
+            model.addAttribute("equipements", supprimedEquipments);
+        } else {
+            model.addAttribute("equipements", List.of());
+        }
+
         model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
         model.addAttribute("selectedStatus", "SUPPRIME");
         return "equipements/list";
     }
@@ -235,8 +240,13 @@ public class EquipmentController {
             // Vérifier que l'établissement existe
             if (!infoEcoleService.getInfoEcoleByEtablissement(equipmentForm.getEtablissement()).isPresent()) {
                 model.addAttribute("categories", categoryService.getAllCategories());
-                model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
-                model.addAttribute("errorMessage", "L'établissement sélectionné n'existe pas");
+// Établissements dynamiques pour l'utilisateur connecté
+                User currentUser = userService.getCurrentUser();
+                if (currentUser != null) {
+                    model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+                } else {
+                    model.addAttribute("ecoles", List.of());
+                }                model.addAttribute("errorMessage", "L'établissement sélectionné n'existe pas");
                 return "equipements/form";
             }
 
@@ -244,8 +254,13 @@ public class EquipmentController {
             Category category = categoryService.getCategoryById(equipmentForm.getCategoryId()).orElse(null);
             if (category == null) {
                 model.addAttribute("categories", categoryService.getAllCategories());
-                model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
-                model.addAttribute("errorMessage", "La catégorie sélectionnée n'existe pas");
+// Établissements dynamiques pour l'utilisateur connecté
+                User currentUser = userService.getCurrentUser();
+                if (currentUser != null) {
+                    model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+                } else {
+                    model.addAttribute("ecoles", List.of());
+                }                model.addAttribute("errorMessage", "La catégorie sélectionnée n'existe pas");
                 return "equipements/form";
             }
 
@@ -320,8 +335,13 @@ public class EquipmentController {
             if (category == null) {
                 model.addAttribute("equipement", equipment);
                 model.addAttribute("categories", categoryService.getAllCategories());
-                model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
-                model.addAttribute("errorMessage", "Catégorie non trouvée");
+// Établissements dynamiques pour l'utilisateur connecté
+                User currentUser = userService.getCurrentUser();
+                if (currentUser != null) {
+                    model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+                } else {
+                    model.addAttribute("ecoles", List.of());
+                }                model.addAttribute("errorMessage", "Catégorie non trouvée");
                 return "equipements/edit-form";
             }
 
@@ -329,8 +349,13 @@ public class EquipmentController {
             if (!infoEcoleService.getInfoEcoleByEtablissement(etablissement).isPresent()) {
                 model.addAttribute("equipement", equipment);
                 model.addAttribute("categories", categoryService.getAllCategories());
-                model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
-                model.addAttribute("errorMessage", "L'établissement sélectionné n'existe pas");
+// Établissements dynamiques pour l'utilisateur connecté
+                User currentUser = userService.getCurrentUser();
+                if (currentUser != null) {
+                    model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+                } else {
+                    model.addAttribute("ecoles", List.of());
+                }                model.addAttribute("errorMessage", "L'établissement sélectionné n'existe pas");
                 return "equipements/edit-form";
             }
 
@@ -405,14 +430,28 @@ public class EquipmentController {
 
     @GetMapping("/category/{categoryId}")
     public String listEquipmentsByCategory(@PathVariable Integer categoryId, Model model) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+        if (!userEcole.isPresent()) {
+            return "redirect:/ecoles/new";
+        }
+
+        String etablissement = userEcole.get().getEtablissement();
         Category category = categoryService.getCategoryById(categoryId).orElse(null);
+
         if (category != null) {
-            model.addAttribute("equipements", equipmentService.getEquipmentsByCategory(category));
+            model.addAttribute("equipements", equipmentService.getEquipmentsByCategoryAndEtablissement(category, etablissement));
             model.addAttribute("selectedCategory", category);
         } else {
-            model.addAttribute("equipements", equipmentService.getAllEquipments());
+            model.addAttribute("equipements", equipmentService.getEquipmentsByEtablissement(etablissement));
         }
+
         model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
         return "equipements/list";
     }
 

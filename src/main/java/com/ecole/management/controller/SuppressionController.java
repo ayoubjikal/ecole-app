@@ -1,8 +1,6 @@
 package com.ecole.management.controller;
 
-import com.ecole.management.model.Suppression;
-import com.ecole.management.model.SuppressionFormDTO;
-import com.ecole.management.model.Equipment;
+import com.ecole.management.model.*;
 import com.ecole.management.service.SuppressionService;
 import com.ecole.management.service.EquipmentService;
 import com.ecole.management.service.CategoryService;
@@ -20,6 +18,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import com.ecole.management.service.UserService;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 
 @Controller
 @RequestMapping("/suppressions")
@@ -30,7 +33,9 @@ public class SuppressionController {
     private final EquipmentService equipmentService;
     private final CategoryService categoryService;
     private final InfoEcoleService infoEcoleService;
+    private final UserService userService;
 
+/*
     @GetMapping
     public String listSuppressions(Model model,
                                    @RequestParam(required = false) Integer categoryId,
@@ -65,7 +70,46 @@ public class SuppressionController {
             model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
             return "suppressions/list";
         }
+    }*/
+@GetMapping
+public String listSuppressions(Model model,
+                               @RequestParam(required = false) Integer categoryId,
+                               @RequestParam(required = false) String etablissement) {
+    User currentUser = userService.getCurrentUser();
+    if (currentUser == null) {
+        return "redirect:/login";
     }
+
+    Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+    if (!userEcole.isPresent()) {
+        model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
+        model.addAttribute("suppressions", List.of());
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("etablissements", List.of());
+        return "suppressions/list";
+    }
+
+    String userEtablissement = userEcole.get().getEtablissement();
+
+    // Filtrer les suppressions par établissement de l'utilisateur
+    List<Suppression> suppressions;
+    if (categoryId != null) {
+        suppressions = suppressionService.getSuppressionsByCategory(categoryId)
+                .stream()
+                .filter(s -> userEtablissement.equals(s.getEtablissement()))
+                .collect(Collectors.toList());
+    } else {
+        suppressions = suppressionService.getSuppressionsByEtablissement(userEtablissement);
+    }
+
+    model.addAttribute("suppressions", suppressions);
+    model.addAttribute("categories", categoryService.getAllCategories());
+    model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
+    model.addAttribute("selectedCategoryId", categoryId);
+    model.addAttribute("selectedEtablissement", userEtablissement);
+
+    return "suppressions/list";
+}
 
     @GetMapping("/new")
     public String showNewSuppressionForm(Model model,
