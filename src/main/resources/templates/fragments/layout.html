@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="fr">
-<head th:fragment="head(title)">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="fr"><head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title} + ' | Système de Gestion d\'Équipements Scolaires'">Système de Gestion d'Équipements Scolaires</title>
@@ -53,6 +54,25 @@
                             <a class="nav-link" th:classappend="${currentUri != null && currentUri.startsWith('/suppressions') ? 'active' : ''}" href="/suppressions">
                                 <i class="fas fa-trash-alt"></i> Suppressions
                             </a>
+                        </li>
+
+                        <!-- Menu utilisateur -->
+                        <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user"></i> <span sec:authentication="name"></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
+                                <li><h6 class="dropdown-header">Mon Compte</h6></li>
+                                <li><a class="dropdown-item" href="/ecoles"><i class="fas fa-school me-2"></i>Mon École</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="/logout" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                 </div>

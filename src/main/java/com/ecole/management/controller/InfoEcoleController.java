@@ -9,7 +9,9 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import com.ecole.management.service.UserService;
+import com.ecole.management.model.User;
+import java.util.List;
 import java.util.Date;
 
 @Controller
@@ -18,15 +20,35 @@ import java.util.Date;
 public class InfoEcoleController {
 
     private final InfoEcoleService infoEcoleService;
+    private final UserService userService;
 
     @GetMapping
     public String listEcoles(Model model) {
-        model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+            model.addAttribute("userHasEcole", infoEcoleService.userHasEcole(currentUser));
+        } else {
+            model.addAttribute("ecoles", List.of());
+            model.addAttribute("userHasEcole", false);
+        }
         return "ecoles/list";
     }
 
     @GetMapping("/new")
-    public String showNewEcoleForm(Model model) {
+    public String showNewEcoleForm(Model model, RedirectAttributes redirectAttributes) {
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez être connecté pour créer une école");
+            return "redirect:/login";
+        }
+
+        if (infoEcoleService.userHasEcole(currentUser)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous avez déjà créé une école. Chaque utilisateur ne peut créer qu'une seule école.");
+            return "redirect:/ecoles";
+        }
+
         model.addAttribute("ecole", new InfoEcole());
         return "ecoles/form";
     }
@@ -62,7 +84,13 @@ public class InfoEcoleController {
                 infoEcole.setDateDeFondationOuRenouvellement(new Date());
             }
 
-            infoEcoleService.saveInfoEcole(infoEcole);
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Vous devez être connecté pour créer une école");
+                return "redirect:/login";
+            }
+
+            infoEcoleService.saveInfoEcoleForUser(infoEcole, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "École enregistrée avec succès");
             return "redirect:/ecoles";
 

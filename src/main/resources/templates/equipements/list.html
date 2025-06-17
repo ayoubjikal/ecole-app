@@ -63,15 +63,12 @@
                 </div>
                 <div class="col-md-3">
                     <label for="etablissementFilter" class="form-label">Établissement</label>
-                    <select id="etablissementFilter" class="form-select" >
+                    <select id="etablissementFilter" class="form-select">
                         <option value="">Tous les établissements</option>
-                       <option value="Lycee Al Massira" th:selected="${selectedEtablissement == 'Lycee Al Massira'}">Lycee Al Massira</option>
-                        <option value="Lycee Moulay Idriss" th:selected="${selectedEtablissement == 'Lycee Moulay Idriss'}">Lycee Moulay Idriss</option>
-                        <option value="Lycee Ibn Sina" th:selected="${selectedEtablissement == 'Lycee Ibn Sina'}">Lycee Ibn Sina</option>
- <!--
-                        <option th:each="ecole : ${ecoles}" th:value="${ecole.etablissement}" th:text="${ecole.etablissement}"></option>
-
-                        -->
+                        <option th:each="ecole : ${etablissements}"
+                                th:value="${ecole.etablissement}"
+                                th:text="${ecole.etablissement}"
+                                th:selected="${ecole.etablissement == selectedEtablissement}"></option>
                     </select>
                 </div>
                 <div class="col-md-2">

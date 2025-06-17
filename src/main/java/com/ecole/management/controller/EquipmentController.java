@@ -23,7 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-
+import com.ecole.management.service.UserService;
+import com.ecole.management.model.User;
 @Controller
 @RequestMapping("/equipements")
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class EquipmentController {
     private final CategoryService categoryService;
     private final InfoEcoleService infoEcoleService;
     private final SuppressionService suppressionService;
+    private final UserService userService;
 
     @GetMapping
     public String listEquipments(Model model,
@@ -116,6 +118,15 @@ public class EquipmentController {
             model.addAttribute("equipements", equipmentPage.getContent());
             model.addAttribute("equipmentPage", equipmentPage);
             model.addAttribute("categories", categoryService.getAllCategories());
+
+// Ajouter les établissements dynamiques basés sur l'utilisateur connecté
+            User currentUser = userService.getCurrentUser();
+            if (currentUser != null) {
+                model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
+            } else {
+                model.addAttribute("etablissements", List.of());
+            }
+
             model.addAttribute("selectedCategoryId", categoryId);
             model.addAttribute("selectedEtablissement", etablissement);
             model.addAttribute("selectedStatus", status);
@@ -154,7 +165,15 @@ public class EquipmentController {
     public String showNewEquipmentForm(Model model) {
         model.addAttribute("equipementForm", new EquipmentFormDTO());
         model.addAttribute("categories", categoryService.getAllCategories());
-        model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+
+        // Établissements dynamiques pour l'utilisateur connecté
+        User currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+        } else {
+            model.addAttribute("ecoles", List.of());
+        }
+
         return "equipements/form";
     }
 
@@ -171,7 +190,15 @@ public class EquipmentController {
         if (equipment != null) {
             model.addAttribute("equipement", equipment);
             model.addAttribute("categories", categoryService.getAllCategories());
-            model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+
+            // Établissements dynamiques pour l'utilisateur connecté
+            User currentUser = userService.getCurrentUser();
+            if (currentUser != null) {
+                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+            } else {
+                model.addAttribute("ecoles", List.of());
+            }
+
             return "equipements/edit-form";
         } else {
             return "redirect:/equipements";
@@ -186,7 +213,15 @@ public class EquipmentController {
 
         if (result.hasErrors()) {
             model.addAttribute("categories", categoryService.getAllCategories());
-            model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+
+            // Établissements dynamiques
+            User currentUser = userService.getCurrentUser();
+            if (currentUser != null) {
+                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+            } else {
+                model.addAttribute("ecoles", List.of());
+            }
+
             model.addAttribute("errorMessage", "Veuillez corriger les erreurs dans le formulaire");
             return "equipements/form";
         }
@@ -243,7 +278,15 @@ public class EquipmentController {
 
         } catch (Exception e) {
             model.addAttribute("categories", categoryService.getAllCategories());
-            model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+
+            // Établissements dynamiques
+            User currentUser = userService.getCurrentUser();
+            if (currentUser != null) {
+                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+            } else {
+                model.addAttribute("ecoles", List.of());
+            }
+
             model.addAttribute("errorMessage", "Erreur lors de l'enregistrement : " + e.getMessage());
             return "equipements/form";
         }
@@ -317,7 +360,15 @@ public class EquipmentController {
             Equipment equipment = equipmentService.getEquipmentById(id).orElse(new Equipment());
             model.addAttribute("equipement", equipment);
             model.addAttribute("categories", categoryService.getAllCategories());
-            model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+
+            // Établissements dynamiques
+            User currentUser = userService.getCurrentUser();
+            if (currentUser != null) {
+                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+            } else {
+                model.addAttribute("ecoles", List.of());
+            }
+
             model.addAttribute("errorMessage", "Erreur lors de la modification : " + e.getMessage());
             return "equipements/edit-form";
         }

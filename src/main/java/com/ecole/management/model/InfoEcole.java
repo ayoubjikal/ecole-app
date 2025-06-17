@@ -57,4 +57,9 @@ public class InfoEcole {
     @Column(length = 500)
     @Size(max = 500, message = "L'adresse ne doit pas dépasser 500 caractères")
     private String adresse;
+
+    // NOUVELLE RELATION AVEC USER
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }
