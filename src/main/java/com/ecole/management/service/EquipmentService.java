@@ -196,7 +196,7 @@ public class EquipmentService {
         return equipmentRepository.findByStatus(EquipmentStatus.SUPPRIME).size();
     }
 
-    // Additional methods for print functionality (without pagination)
+    // Additional methods for print functionality (without pagination at all)
     @Transactional(readOnly = true)
     public List<Equipment> getEquipmentsByStatusAndCategory(EquipmentStatus status, Category category) {
         return equipmentRepository.findByStatusAndCategory(status, category);
