@@ -13,6 +13,7 @@ import com.ecole.management.service.UserService;
 import com.ecole.management.model.User;
 import java.util.List;
 import java.util.Date;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/ecoles")
@@ -60,11 +61,17 @@ public class InfoEcoleController {
         return "ecoles/details";
     }
 
+
     @GetMapping("/edit/{etablissement}")
     public String showEditEcoleForm(@PathVariable String etablissement, Model model) {
-        infoEcoleService.getInfoEcoleByEtablissement(etablissement)
-                .ifPresent(ecole -> model.addAttribute("ecole", ecole));
-        return "ecoles/form";
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+            infoEcoleService.getInfoEcoleByEtablissement(etablissement)
+                    .ifPresent(ecole -> model.addAttribute("ecole", ecole));
+            return "ecoles/form";
+
     }
 
     @PostMapping("/save")

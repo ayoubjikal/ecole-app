@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -39,10 +41,18 @@ public class SecurityConfig {
     }
 
     @Bean
+    public LogoutSuccessHandler logoutSuccessHandler() {
+        SimpleUrlLogoutSuccessHandler handler = new SimpleUrlLogoutSuccessHandler();
+        handler.setDefaultTargetUrl("/login?logout=true");
+        handler.setAlwaysUseDefaultTargetUrl(true);
+        return handler;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/static/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -54,15 +64,18 @@ public class SecurityConfig {
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout=true")
+                        .logoutSuccessHandler(logoutSuccessHandler())
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
+                        .clearAuthentication(true)
                         .permitAll()
                 )
                 .sessionManagement(session -> session
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
-                );
+                        .expiredUrl("/login?expired=true")
+                )
+                .csrf(csrf -> csrf.disable()); // Désactivé pour les tests, réactiver en production
 
         return http.build();
     }

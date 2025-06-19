@@ -1,10 +1,7 @@
 package com.ecole.management.controller;
 
 import com.ecole.management.model.*;
-import com.ecole.management.service.SuppressionService;
-import com.ecole.management.service.EquipmentService;
-import com.ecole.management.service.CategoryService;
-import com.ecole.management.service.InfoEcoleService;
+import com.ecole.management.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import com.ecole.management.service.UserService;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,8 +30,10 @@ public class SuppressionController {
     private final CategoryService categoryService;
     private final InfoEcoleService infoEcoleService;
     private final UserService userService;
+    private final SecurityService securityService;
 
-/*
+
+    /*
     @GetMapping
     public String listSuppressions(Model model,
                                    @RequestParam(required = false) Integer categoryId,
@@ -71,71 +69,109 @@ public class SuppressionController {
             return "suppressions/list";
         }
     }*/
-@GetMapping
-public String listSuppressions(Model model,
-                               @RequestParam(required = false) Integer categoryId,
-                               @RequestParam(required = false) String etablissement) {
-    User currentUser = userService.getCurrentUser();
-    if (currentUser == null) {
-        return "redirect:/login";
-    }
+    @GetMapping
+    public String listSuppressions(Model model,
+                                   @RequestParam(required = false) Integer categoryId,
+                                   @RequestParam(required = false) String etablissement) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+        if (securityCheck == null) {
+            return "redirect:/login";
+        }
 
-    Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
-    if (!userEcole.isPresent()) {
-        model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
-        model.addAttribute("suppressions", List.of());
+        if (!securityCheck.hasEcole()) {
+            model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            model.addAttribute("suppressions", List.of());
+            model.addAttribute("categories", categoryService.getAllCategories());
+            model.addAttribute("etablissements", List.of());
+            return "suppressions/list";
+        }
+
+        String userEtablissement = securityCheck.getUserEtablissement();
+
+        // Filtrer les suppressions par établissement de l'utilisateur
+        List<Suppression> suppressions;
+        if (categoryId != null) {
+            suppressions = suppressionService.getSuppressionsByCategory(categoryId)
+                    .stream()
+                    .filter(s -> userEtablissement.equals(s.getEtablissement()))
+                    .collect(Collectors.toList());
+        } else {
+            suppressions = suppressionService.getSuppressionsByEtablissement(userEtablissement);
+        }
+
+        model.addAttribute("suppressions", suppressions);
         model.addAttribute("categories", categoryService.getAllCategories());
-        model.addAttribute("etablissements", List.of());
+        model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(securityCheck.getUser()));
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("selectedEtablissement", userEtablissement);
+
         return "suppressions/list";
     }
-
-    String userEtablissement = userEcole.get().getEtablissement();
-
-    // Filtrer les suppressions par établissement de l'utilisateur
-    List<Suppression> suppressions;
-    if (categoryId != null) {
-        suppressions = suppressionService.getSuppressionsByCategory(categoryId)
-                .stream()
-                .filter(s -> userEtablissement.equals(s.getEtablissement()))
-                .collect(Collectors.toList());
-    } else {
-        suppressions = suppressionService.getSuppressionsByEtablissement(userEtablissement);
-    }
-
-    model.addAttribute("suppressions", suppressions);
-    model.addAttribute("categories", categoryService.getAllCategories());
-    model.addAttribute("etablissements", infoEcoleService.getEcolesForCurrentUser(currentUser));
-    model.addAttribute("selectedCategoryId", categoryId);
-    model.addAttribute("selectedEtablissement", userEtablissement);
-
-    return "suppressions/list";
-}
 
     @GetMapping("/new")
     public String showNewSuppressionForm(Model model,
                                          @RequestParam(required = false) String etablissement) {
-        model.addAttribute("suppressionForm", new SuppressionFormDTO());
-
-        // Get available equipment for suppression
-        List<Equipment> availableEquipments;
-        if (etablissement != null && !etablissement.isEmpty()) {
-            availableEquipments = suppressionService.getAvailableEquipmentsForSuppressionByEtablissement(etablissement);
-            model.addAttribute("selectedEtablissement", etablissement);
-        } else {
-            availableEquipments = suppressionService.getAvailableEquipmentsForSuppression();
+        // SÉCURITÉ: Vérifier que l'utilisateur est connecté
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
         }
 
+        // SÉCURITÉ: Vérifier que l'utilisateur a une école
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+        if (!userEcole.isPresent()) {
+            model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            model.addAttribute("suppressionForm", new SuppressionFormDTO());
+            model.addAttribute("availableEquipments", List.of());
+            model.addAttribute("ecoles", List.of());
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "suppressions/form";
+        }
+
+        String userEtablissement = userEcole.get().getEtablissement();
+
+        // SÉCURITÉ: Toujours utiliser l'établissement de l'utilisateur connecté
+        model.addAttribute("suppressionForm", new SuppressionFormDTO());
+
+        // Get available equipment UNIQUEMENT pour l'établissement de l'utilisateur
+        List<Equipment> availableEquipments = suppressionService.getAvailableEquipmentsForSuppressionByEtablissement(userEtablissement);
+
         model.addAttribute("availableEquipments", availableEquipments);
-        model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+        model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
         model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("selectedEtablissement", userEtablissement);
 
         return "suppressions/form";
     }
 
     @GetMapping("/{id}")
     public String showSuppressionDetails(@PathVariable Integer id, Model model) {
-        suppressionService.getSuppressionById(id)
-                .ifPresent(suppression -> model.addAttribute("suppression", suppression));
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+        if (!userEcole.isPresent()) {
+            return "redirect:/suppressions";
+        }
+
+        String userEtablissement = userEcole.get().getEtablissement();
+
+        // SÉCURITÉ: Vérifier que la suppression appartient bien à l'utilisateur
+        Optional<Suppression> suppressionOpt = suppressionService.getSuppressionById(id);
+        if (suppressionOpt.isPresent()) {
+            Suppression suppression = suppressionOpt.get();
+            if (userEtablissement.equals(suppression.getEtablissement())) {
+                model.addAttribute("suppression", suppression);
+            } else {
+                // La suppression n'appartient pas à cet utilisateur
+                return "redirect:/suppressions";
+            }
+        } else {
+            return "redirect:/suppressions";
+        }
+
         return "suppressions/details";
     }
 
@@ -145,15 +181,40 @@ public String listSuppressions(Model model,
                                   RedirectAttributes redirectAttributes,
                                   Model model) {
 
+        // SÉCURITÉ: Vérifier que l'utilisateur est connecté
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        // SÉCURITÉ: Vérifier que l'utilisateur a une école
+        Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+        if (!userEcole.isPresent()) {
+            model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/suppressions";
+        }
+
+        String userEtablissement = userEcole.get().getEtablissement();
+
         if (result.hasErrors()) {
-            model.addAttribute("availableEquipments", suppressionService.getAvailableEquipmentsForSuppression());
-            model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+            model.addAttribute("availableEquipments", suppressionService.getAvailableEquipmentsForSuppressionByEtablissement(userEtablissement));
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
             model.addAttribute("categories", categoryService.getAllCategories());
             model.addAttribute("errorMessage", "Veuillez corriger les erreurs dans le formulaire");
             return "suppressions/form";
         }
 
         try {
+            // SÉCURITÉ: Vérifier que l'équipement appartient à l'utilisateur
+            Equipment equipment = equipmentService.getEquipmentById(suppressionForm.getEquipmentId()).orElse(null);
+            if (equipment == null || !userEtablissement.equals(equipment.getEtablissement())) {
+                model.addAttribute("errorMessage", "Équipement non trouvé ou accès non autorisé.");
+                model.addAttribute("availableEquipments", suppressionService.getAvailableEquipmentsForSuppressionByEtablissement(userEtablissement));
+                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
+                model.addAttribute("categories", categoryService.getAllCategories());
+                return "suppressions/form";
+            }
+
             // Set date if not provided
             if (suppressionForm.getDateSuppression() == null) {
                 suppressionForm.setDateSuppression(new Date());
@@ -167,8 +228,8 @@ public String listSuppressions(Model model,
             return "redirect:/suppressions";
 
         } catch (Exception e) {
-            model.addAttribute("availableEquipments", suppressionService.getAvailableEquipmentsForSuppression());
-            model.addAttribute("ecoles", infoEcoleService.getAllInfoEcoles());
+            model.addAttribute("availableEquipments", suppressionService.getAvailableEquipmentsForSuppressionByEtablissement(userEtablissement));
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
             model.addAttribute("categories", categoryService.getAllCategories());
             model.addAttribute("errorMessage", "Erreur lors de l'enregistrement : " + e.getMessage());
             return "suppressions/form";
@@ -178,11 +239,34 @@ public String listSuppressions(Model model,
     @GetMapping("/delete/{id}")
     public String deleteSuppression(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            Suppression suppression = suppressionService.getSuppressionById(id).orElse(null);
-            String equipmentInfo = "suppression";
-            if (suppression != null) {
-                equipmentInfo = "suppression de l'équipement " + suppression.getEquipmentId();
+            // SÉCURITÉ: Vérifier que l'utilisateur est connecté
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                return "redirect:/login";
             }
+
+            // SÉCURITÉ: Vérifier que l'utilisateur a une école
+            Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+            if (!userEcole.isPresent()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+                return "redirect:/suppressions";
+            }
+
+            String userEtablissement = userEcole.get().getEtablissement();
+
+            // SÉCURITÉ: Vérifier que la suppression appartient bien à l'utilisateur
+            Suppression suppression = suppressionService.getSuppressionById(id).orElse(null);
+            if (suppression == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Suppression non trouvée.");
+                return "redirect:/suppressions";
+            }
+
+            if (!userEtablissement.equals(suppression.getEtablissement())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé.");
+                return "redirect:/suppressions";
+            }
+
+            String equipmentInfo = "suppression de l'équipement " + suppression.getEquipmentId();
 
             suppressionService.deleteSuppression(id);
             redirectAttributes.addFlashAttribute("successMessage",

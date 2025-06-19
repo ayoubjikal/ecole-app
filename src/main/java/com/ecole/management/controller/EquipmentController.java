@@ -20,7 +20,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import com.ecole.management.service.UserService;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
@@ -33,6 +34,7 @@ public class EquipmentController {
     private final InfoEcoleService infoEcoleService;
     private final SuppressionService suppressionService;
     private final UserService userService;
+
 
     @GetMapping
     public String listEquipments(Model model,
@@ -184,6 +186,7 @@ public class EquipmentController {
 
     @GetMapping("/{id}")
     public String showEquipmentDetails(@PathVariable Integer id, Model model) {
+
         equipmentService.getEquipmentById(id)
                 .ifPresent(equipement -> model.addAttribute("equipement", equipement));
         return "equipements/details";
@@ -461,6 +464,24 @@ public class EquipmentController {
                                     @RequestParam(required = false) String etablissement,
                                     @RequestParam(required = false) String status) {
         try {
+            // SÉCURITÉ: Vérifier que l'utilisateur est connecté
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                return "redirect:/login";
+            }
+
+            // SÉCURITÉ: Vérifier que l'utilisateur a une école
+            Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+            if (!userEcole.isPresent()) {
+                model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
+                return "redirect:/equipements";
+            }
+
+            String userEtablissement = userEcole.get().getEtablissement();
+
+            // SÉCURITÉ: Forcer l'établissement de l'utilisateur connecté
+            etablissement = userEtablissement;
+
             List<Equipment> equipments;
 
             // Parse status parameter
@@ -473,43 +494,25 @@ public class EquipmentController {
                 }
             }
 
-            // Get ALL equipments without pagination for printing
-            if (categoryId != null && etablissement != null && equipmentStatus != null) {
+            // Get equipments filtered by user's etablissement
+            if (categoryId != null && equipmentStatus != null) {
                 Category category = categoryService.getCategoryById(categoryId).orElse(null);
                 if (category != null) {
                     equipments = equipmentService.getEquipmentsByStatusAndCategoryAndEtablissement(equipmentStatus, category, etablissement);
                 } else {
                     equipments = equipmentService.getEquipmentsByStatusAndEtablissement(equipmentStatus, etablissement);
                 }
-            } else if (categoryId != null && equipmentStatus != null) {
-                Category category = categoryService.getCategoryById(categoryId).orElse(null);
-                if (category != null) {
-                    equipments = equipmentService.getEquipmentsByStatusAndCategory(equipmentStatus, category);
-                } else {
-                    equipments = equipmentService.getEquipmentsByStatus(equipmentStatus);
-                }
-            } else if (etablissement != null && equipmentStatus != null) {
-                equipments = equipmentService.getEquipmentsByStatusAndEtablissement(equipmentStatus, etablissement);
             } else if (equipmentStatus != null) {
-                equipments = equipmentService.getEquipmentsByStatus(equipmentStatus);
-            } else if (categoryId != null && etablissement != null) {
+                equipments = equipmentService.getEquipmentsByStatusAndEtablissement(equipmentStatus, etablissement);
+            } else if (categoryId != null) {
                 Category category = categoryService.getCategoryById(categoryId).orElse(null);
                 if (category != null) {
                     equipments = equipmentService.getEquipmentsByCategoryAndEtablissement(category, etablissement);
                 } else {
                     equipments = equipmentService.getEquipmentsByEtablissement(etablissement);
                 }
-            } else if (categoryId != null) {
-                Category category = categoryService.getCategoryById(categoryId).orElse(null);
-                if (category != null) {
-                    equipments = equipmentService.getEquipmentsByCategory(category);
-                } else {
-                    equipments = equipmentService.getAllEquipments();
-                }
-            } else if (etablissement != null) {
-                equipments = equipmentService.getEquipmentsByEtablissement(etablissement);
             } else {
-                equipments = equipmentService.getAllEquipments();
+                equipments = equipmentService.getEquipmentsByEtablissement(etablissement);
             }
 
             model.addAttribute("equipements", equipments);
@@ -530,40 +533,46 @@ public class EquipmentController {
                                         @RequestParam(required = false) Integer categoryId,
                                         @RequestParam(required = false) String etablissement) {
         try {
-            // Get equipment data
+            // SÉCURITÉ: Vérifier que l'utilisateur est connecté
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                return "redirect:/login";
+            }
+
+            // SÉCURITÉ: Vérifier que l'utilisateur a une école
+            Optional<InfoEcole> userEcole = infoEcoleService.getInfoEcoleByUser(currentUser);
+            if (!userEcole.isPresent()) {
+                model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
+                return "redirect:/equipements";
+            }
+
+            String userEtablissement = userEcole.get().getEtablissement();
+
+            // SÉCURITÉ: Forcer l'établissement de l'utilisateur connecté
+            etablissement = userEtablissement;
+
+            // Get equipment data filtered by user's etablissement
             List<Equipment> activeEquipments;
             List<Suppression> suppressions;
 
-            if (categoryId != null && etablissement != null) {
+            if (categoryId != null) {
                 Category category = categoryService.getCategoryById(categoryId).orElse(null);
                 if (category != null) {
                     activeEquipments = equipmentService.getActiveEquipmentsByCategoryAndEtablissement(category, etablissement);
+                    String finalEtablissement = etablissement;
                     suppressions = suppressionService.getSuppressionsByCategory(categoryId)
-                            .stream().filter(s -> etablissement.equals(s.getEtablissement())).toList();
+                            .stream().filter(s -> finalEtablissement.equals(s.getEtablissement())).toList();
                     model.addAttribute("category", category);
                 } else {
                     activeEquipments = equipmentService.getActiveEquipmentsByEtablissement(etablissement);
                     suppressions = suppressionService.getSuppressionsByEtablissement(etablissement);
                 }
-                model.addAttribute("etablissement", etablissement);
-            } else if (categoryId != null) {
-                Category category = categoryService.getCategoryById(categoryId).orElse(null);
-                if (category != null) {
-                    activeEquipments = equipmentService.getActiveEquipmentsByCategory(category);
-                    suppressions = suppressionService.getSuppressionsByCategory(categoryId);
-                    model.addAttribute("category", category);
-                } else {
-                    activeEquipments = equipmentService.getActiveEquipments();
-                    suppressions = suppressionService.getAllSuppressions();
-                }
-            } else if (etablissement != null) {
+            } else {
                 activeEquipments = equipmentService.getActiveEquipmentsByEtablissement(etablissement);
                 suppressions = suppressionService.getSuppressionsByEtablissement(etablissement);
-                model.addAttribute("etablissement", etablissement);
-            } else {
-                activeEquipments = equipmentService.getActiveEquipments();
-                suppressions = suppressionService.getAllSuppressions();
             }
+
+            model.addAttribute("etablissement", etablissement);
 
             // Calculate statistics
             Map<String, Long> equipmentStats = new HashMap<>();
@@ -575,7 +584,7 @@ public class EquipmentController {
             double totalValue = activeEquipments.stream().mapToDouble(e -> e.getPrix_unitaire() != null ? e.getPrix_unitaire() : 0).sum() +
                     suppressions.stream().mapToDouble(s -> s.getPrixUnitaire() != null ? s.getPrixUnitaire() : 0).sum();
 
-            // Category summary
+            // Category summary - ONLY for user's equipment
             Map<Integer, Map<String, Object>> categorySummary = new HashMap<>();
             List<Category> allCategories = categoryService.getAllCategories();
 

@@ -66,9 +66,12 @@
                                 <li><a class="dropdown-item" href="/ecoles"><i class="fas fa-school me-2"></i>Mon École</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a href="#" onclick="document.getElementById('logoutForm').submit();" class="dropdown-item">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-                                    </a>
+                                    <form method="post" action="/logout" style="display: inline;">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" th:if="${_csrf}"/>
+                                        <button type="submit" class="dropdown-item" style="border: none; background: none; text-align: left;">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                                        </button>
+                                    </form>
                                 </li>
                             </ul>
                         </li>
@@ -123,9 +126,5 @@
         <th:block th:replace="${scripts} ?: ~{}"></th:block>
     </footer>
 
-    <!-- Formulaire caché pour la déconnexion -->
-    <form id="logoutForm" method="post" th:action="@{/logout}" style="display: none;">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-    </form>
 </body>
 </html>
