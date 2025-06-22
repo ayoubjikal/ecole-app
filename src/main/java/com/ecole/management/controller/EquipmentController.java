@@ -1,10 +1,7 @@
 package com.ecole.management.controller;
 
 import com.ecole.management.model.*;
-import com.ecole.management.service.EquipmentService;
-import com.ecole.management.service.CategoryService;
-import com.ecole.management.service.InfoEcoleService;
-import com.ecole.management.service.SuppressionService;
+import com.ecole.management.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -19,7 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import com.ecole.management.service.UserService;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,6 +31,8 @@ public class EquipmentController {
     private final InfoEcoleService infoEcoleService;
     private final SuppressionService suppressionService;
     private final UserService userService;
+    private final SecurityService securityService;
+
 
 
     @GetMapping
@@ -185,126 +184,110 @@ public class EquipmentController {
     }
 
     @GetMapping("/{id}")
-    public String showEquipmentDetails(@PathVariable Integer id, Model model) {
+    public String showEquipmentDetails(@PathVariable Integer id, Model model,
+                                       RedirectAttributes redirectAttributes) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
 
-        equipmentService.getEquipmentById(id)
-                .ifPresent(equipement -> model.addAttribute("equipement", equipement));
-        return "equipements/details";
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
+        }
+
+        // CONTRÔLE D'ACCÈS : Vérifier que l'équipement appartient à l'utilisateur
+        if (!securityService.canAccessEquipment(id, securityCheck.getUser())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé à cet équipement.");
+            return "redirect:/equipements";
+        }
+
+        Optional<Equipment> equipmentOpt = equipmentService.getEquipmentById(id);
+        if (equipmentOpt.isPresent()) {
+            model.addAttribute("equipement", equipmentOpt.get());
+            return "equipements/details";
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Équipement non trouvé.");
+            return "redirect:/equipements";
+        }
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditEquipmentForm(@PathVariable Integer id, Model model) {
-        Equipment equipment = equipmentService.getEquipmentById(id).orElse(null);
-        if (equipment != null) {
+    public String showEditEquipmentForm(@PathVariable Integer id, Model model,
+                                        RedirectAttributes redirectAttributes) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
+        }
+
+        // CONTRÔLE D'ACCÈS : Vérifier que l'équipement appartient à l'utilisateur
+        if (!securityService.canAccessEquipment(id, securityCheck.getUser())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé à cet équipement.");
+            return "redirect:/equipements";
+        }
+
+        Optional<Equipment> equipmentOpt = equipmentService.getEquipmentById(id);
+        if (equipmentOpt.isPresent()) {
+            Equipment equipment = equipmentOpt.get();
             model.addAttribute("equipement", equipment);
             model.addAttribute("categories", categoryService.getAllCategories());
-
-            // Établissements dynamiques pour l'utilisateur connecté
-            User currentUser = userService.getCurrentUser();
-            if (currentUser != null) {
-                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
-            } else {
-                model.addAttribute("ecoles", List.of());
-            }
-
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(securityCheck.getUser()));
             return "equipements/edit-form";
         } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Équipement non trouvé.");
             return "redirect:/equipements";
         }
     }
 
     @PostMapping("/save")
-    public String saveEquipment(@Valid @ModelAttribute("equipementForm") EquipmentFormDTO equipmentForm,
+    public String saveEquipment(@Valid @ModelAttribute("equipmentForm") EquipmentFormDTO equipmentForm,
                                 BindingResult result,
                                 RedirectAttributes redirectAttributes,
                                 Model model) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
+        }
+
+        // Si c'est une modification, vérifier l'accès
+        if (equipmentForm.getId() != null) {
+            if (!securityService.canAccessEquipment(equipmentForm.getId(), securityCheck.getUser())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé à cet équipement.");
+                return "redirect:/equipements";
+            }
+        }
 
         if (result.hasErrors()) {
             model.addAttribute("categories", categoryService.getAllCategories());
-
-            // Établissements dynamiques
-            User currentUser = userService.getCurrentUser();
-            if (currentUser != null) {
-                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
-            } else {
-                model.addAttribute("ecoles", List.of());
-            }
-
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(securityCheck.getUser()));
             model.addAttribute("errorMessage", "Veuillez corriger les erreurs dans le formulaire");
             return "equipements/form";
         }
 
         try {
-            // Set date if not provided
-            if (equipmentForm.getDate() == null) {
-                equipmentForm.setDate(new Date());
-            }
+            // Forcer l'établissement de l'utilisateur connecté
+            equipmentForm.setEtablissement(securityCheck.getUserEtablissement());
 
-            // Vérifier que l'établissement existe
-            if (!infoEcoleService.getInfoEcoleByEtablissement(equipmentForm.getEtablissement()).isPresent()) {
-                model.addAttribute("categories", categoryService.getAllCategories());
-// Établissements dynamiques pour l'utilisateur connecté
-                User currentUser = userService.getCurrentUser();
-                if (currentUser != null) {
-                    model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
-                } else {
-                    model.addAttribute("ecoles", List.of());
-                }                model.addAttribute("errorMessage", "L'établissement sélectionné n'existe pas");
-                return "equipements/form";
-            }
+            List<Equipment> equipments = equipmentService.createEquipments(
+                    equipmentForm.toEquipment(), equipmentForm.getQuantity());
 
-            // Vérifier que la catégorie existe
-            Category category = categoryService.getCategoryById(equipmentForm.getCategoryId()).orElse(null);
-            if (category == null) {
-                model.addAttribute("categories", categoryService.getAllCategories());
-// Établissements dynamiques pour l'utilisateur connecté
-                User currentUser = userService.getCurrentUser();
-                if (currentUser != null) {
-                    model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
-                } else {
-                    model.addAttribute("ecoles", List.of());
-                }                model.addAttribute("errorMessage", "La catégorie sélectionnée n'existe pas");
-                return "equipements/form";
-            }
-
-            // Create equipment template
-            Equipment equipmentTemplate = new Equipment();
-            equipmentTemplate.setDate(equipmentForm.getDate());
-            equipmentTemplate.setDesignation(equipmentForm.getDesignation());
-            equipmentTemplate.setSource_equipment(equipmentForm.getSource_equipment());
-            equipmentTemplate.setPrix_unitaire(equipmentForm.getPrix_unitaire());
-            equipmentTemplate.setSpecialisation(equipmentForm.getSpecialisation());
-            equipmentTemplate.setEtat(equipmentForm.getEtat());
-            equipmentTemplate.setRemarque(equipmentForm.getRemarque());
-            equipmentTemplate.setEtablissement(equipmentForm.getEtablissement());
-            equipmentTemplate.setCategory(category);
-
-            // Create multiple equipments based on quantity
-            List<Equipment> createdEquipments = equipmentService.createEquipments(equipmentTemplate, equipmentForm.getQuantity());
-
-            String message = String.format("%d équipement(s) créé(s) avec succès", createdEquipments.size());
-            if (createdEquipments.size() > 1) {
-                String firstId = createdEquipments.get(0).getEquipmentId();
-                String lastId = createdEquipments.get(createdEquipments.size() - 1).getEquipmentId();
-                message += String.format(" (IDs: %s à %s)", firstId, lastId);
-            } else if (createdEquipments.size() == 1) {
-                message += String.format(" (ID: %s)", createdEquipments.get(0).getEquipmentId());
-            }
-
+            String message = String.format("✅ %d équipement(s) créé(s) avec succès", equipments.size());
             redirectAttributes.addFlashAttribute("successMessage", message);
             return "redirect:/equipements";
 
         } catch (Exception e) {
             model.addAttribute("categories", categoryService.getAllCategories());
-
-            // Établissements dynamiques
-            User currentUser = userService.getCurrentUser();
-            if (currentUser != null) {
-                model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
-            } else {
-                model.addAttribute("ecoles", List.of());
-            }
-
+            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(securityCheck.getUser()));
             model.addAttribute("errorMessage", "Erreur lors de l'enregistrement : " + e.getMessage());
             return "equipements/form";
         }
@@ -404,8 +387,23 @@ public class EquipmentController {
 
     @GetMapping("/delete/{id}")
     public String deleteEquipment(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
+        }
+
+        // CONTRÔLE D'ACCÈS : Vérifier que l'équipement appartient à l'utilisateur
+        if (!securityService.canAccessEquipment(id, securityCheck.getUser())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé à cet équipement.");
+            return "redirect:/equipements";
+        }
+
         try {
-            // Get equipment details for confirmation message
             Optional<Equipment> equipmentOpt = equipmentService.getEquipmentById(id);
             String equipmentInfo = "équipement";
             if (equipmentOpt.isPresent()) {
@@ -582,7 +580,7 @@ public class EquipmentController {
 
             // Calculate total value
             double totalValue = activeEquipments.stream().mapToDouble(e -> e.getPrix_unitaire() != null ? e.getPrix_unitaire() : 0).sum() +
-                    suppressions.stream().mapToDouble(s -> s.getPrixUnitaire() != null ? s.getPrixUnitaire() : 0).sum();
+                    suppressions.stream().mapToDouble(s -> s.getPrix_unitaire() != null ? s.getPrix_unitaire() : 0).sum();
 
             // Category summary - ONLY for user's equipment
             Map<Integer, Map<String, Object>> categorySummary = new HashMap<>();
@@ -598,7 +596,7 @@ public class EquipmentController {
                         .mapToDouble(e -> e.getPrix_unitaire() != null ? e.getPrix_unitaire() : 0).sum() +
                         suppressions.stream()
                                 .filter(s -> s.getEquipment().getCategory().getId().equals(cat.getId()))
-                                .mapToDouble(s -> s.getPrixUnitaire() != null ? s.getPrixUnitaire() : 0).sum();
+                                .mapToDouble(s -> s.getPrix_unitaire() != null ? s.getPrix_unitaire() : 0).sum();
 
                 catStats.put("total", activeCount + suppressionCount);
                 catStats.put("active", activeCount);

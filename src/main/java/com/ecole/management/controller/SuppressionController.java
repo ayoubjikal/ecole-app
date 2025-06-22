@@ -78,7 +78,7 @@ public class SuppressionController {
             return "redirect:/login";
         }
 
-        if (!securityCheck.hasEcole()) {
+        if (!securityCheck.hasSchool()) {
             model.addAttribute("errorMessage", "Vous devez d'abord créer une école.");
             model.addAttribute("suppressions", List.of());
             model.addAttribute("categories", categoryService.getAllCategories());

@@ -1,7 +1,10 @@
 package com.ecole.management.controller;
 
 import com.ecole.management.model.InfoEcole;
+import com.ecole.management.model.User;
 import com.ecole.management.service.InfoEcoleService;
+import com.ecole.management.service.SecurityService;
+import com.ecole.management.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -9,10 +12,9 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.ecole.management.service.UserService;
-import com.ecole.management.model.User;
-import java.util.List;
+
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -21,7 +23,9 @@ import java.util.Optional;
 public class InfoEcoleController {
 
     private final InfoEcoleService infoEcoleService;
+    private final SecurityService securityService;
     private final UserService userService;
+
 
     @GetMapping
     public String listEcoles(Model model) {
@@ -35,6 +39,7 @@ public class InfoEcoleController {
         }
         return "ecoles/list";
     }
+
 
     @GetMapping("/new")
     public String showNewEcoleForm(Model model, RedirectAttributes redirectAttributes) {
@@ -54,24 +59,62 @@ public class InfoEcoleController {
         return "ecoles/form";
     }
 
-    @GetMapping("/{etablissement}")
-    public String showEcoleDetails(@PathVariable String etablissement, Model model) {
-        infoEcoleService.getInfoEcoleByEtablissement(etablissement)
-                .ifPresent(ecole -> model.addAttribute("ecole", ecole));
-        return "ecoles/details";
+    @GetMapping("/{id}")
+    public String showEcoleDetails(@PathVariable Long id, Model model,
+                                   RedirectAttributes redirectAttributes) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
+        }
+
+        // CONTRÔLE D'ACCÈS : Vérifier que l'école appartient à l'utilisateur
+        if (!securityService.canAccessEcole(id, securityCheck.getUser())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé à cette école.");
+            return "redirect:/ecoles";
+        }
+
+        Optional<InfoEcole> ecole = infoEcoleService.getInfoEcoleById(id);
+        if (ecole.isPresent()) {
+            model.addAttribute("ecole", ecole.get());
+            return "ecoles/details";
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "École non trouvée.");
+            return "redirect:/ecoles";
+        }
     }
 
+    @GetMapping("/edit/{id}")
+    public String showEditEcoleForm(@PathVariable Long id, Model model,
+                                    RedirectAttributes redirectAttributes) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
 
-    @GetMapping("/edit/{etablissement}")
-    public String showEditEcoleForm(@PathVariable String etablissement, Model model) {
-        User currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
-            return "redirect:/login";
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
         }
-            infoEcoleService.getInfoEcoleByEtablissement(etablissement)
-                    .ifPresent(ecole -> model.addAttribute("ecole", ecole));
-            return "ecoles/form";
 
+        // CONTRÔLE D'ACCÈS : Vérifier que l'école appartient à l'utilisateur
+        if (!securityService.canAccessEcole(id, securityCheck.getUser())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Accès non autorisé à cette école.");
+            return "redirect:/ecoles";
+        }
+
+        Optional<InfoEcole> ecole = infoEcoleService.getInfoEcoleById(id);
+        if (ecole.isPresent()) {
+            model.addAttribute("ecole", ecole.get());
+            return "ecoles/form";
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "École non trouvée.");
+            return "redirect:/ecoles";
+        }
     }
 
     @PostMapping("/save")
@@ -79,6 +122,11 @@ public class InfoEcoleController {
                             BindingResult result,
                             RedirectAttributes redirectAttributes,
                             Model model) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+
+        if (!securityCheck.isAuthorized()) {
+            return "redirect:/login";
+        }
 
         if (result.hasErrors()) {
             model.addAttribute("errorMessage", "Veuillez corriger les erreurs dans le formulaire");
@@ -86,18 +134,11 @@ public class InfoEcoleController {
         }
 
         try {
-            // Ensure date is set if not provided
             if (infoEcole.getDateDeFondationOuRenouvellement() == null) {
                 infoEcole.setDateDeFondationOuRenouvellement(new Date());
             }
 
-            User currentUser = userService.getCurrentUser();
-            if (currentUser == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Vous devez être connecté pour créer une école");
-                return "redirect:/login";
-            }
-
-            infoEcoleService.saveInfoEcoleForUser(infoEcole, currentUser);
+            infoEcoleService.saveInfoEcoleForUser(infoEcole, securityCheck.getUser());
             redirectAttributes.addFlashAttribute("successMessage", "École enregistrée avec succès");
             return "redirect:/ecoles";
 
@@ -107,10 +148,25 @@ public class InfoEcoleController {
         }
     }
 
-    @GetMapping("/delete/{etablissement}")
-    public String deleteEcole(@PathVariable String etablissement, RedirectAttributes redirectAttributes) {
-        infoEcoleService.deleteInfoEcole(etablissement);
-        redirectAttributes.addFlashAttribute("successMessage", "École supprimée avec succès");
+    @GetMapping("/delete/{id}")
+    public String deleteEcole(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+
+        if (!securityCheck.isValid()) {
+            if (!securityCheck.isAuthorized()) {
+                return "redirect:/login";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez d'abord créer une école.");
+            return "redirect:/ecoles";
+        }
+
+        try {
+            infoEcoleService.deleteInfoEcole(id, securityCheck.getUser());
+            redirectAttributes.addFlashAttribute("successMessage", "École supprimée avec succès");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erreur lors de la suppression : " + e.getMessage());
+        }
+
         return "redirect:/ecoles";
     }
 }

@@ -1,8 +1,8 @@
 package com.ecole.management.controller;
 
 import com.ecole.management.model.User;
-import com.ecole.management.service.UserService;
 import com.ecole.management.service.InfoEcoleService;
+import com.ecole.management.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
