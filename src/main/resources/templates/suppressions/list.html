@@ -103,7 +103,7 @@
                         </td>
                         <td th:text="${suppression.designation}"></td>
                         <td th:text="${suppression.etablissement}"></td>
-                        <td th:text="${#numbers.formatDecimal(suppression.prixUnitaire, 1, 2) + ' DH'}"></td>
+                        <td th:text="${#numbers.formatDecimal(suppression.prix_unitaire, 1, 2) + ' DH'}"></td>
                         <td th:text="${#dates.format(suppression.dateSuppression, 'dd/MM/yyyy')}"
                             th:attr="data-date=${#dates.format(suppression.dateSuppression, 'yyyy-MM-dd')}"></td>
                         <td>
@@ -138,7 +138,7 @@
                     <tfoot th:if="${!suppressions.empty}">
                     <tr class="table-warning">
                         <td colspan="4" class="text-end fw-bold">Total suppressions: <span th:text="${suppressions.size()}"></span> | Valeur totale:</td>
-                        <td th:text="${#numbers.formatDecimal(#aggregates.sum(suppressions.![prixUnitaire != null ? prixUnitaire : 0]), 1, 2) + ' DH'}" class="fw-bold"></td>
+                        <td th:text="${#numbers.formatDecimal(#aggregates.sum(suppressions.![prix_unitaire != null ? prix_unitaire : 0]), 1, 2) + ' DH'}" class="fw-bold"></td>
                         <td colspan="4"></td>
                     </tr>
                     </tfoot>

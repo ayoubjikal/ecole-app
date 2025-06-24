@@ -48,9 +48,14 @@ public class CategoryService {
     @Transactional
     public void initializeDefaultCategories() {
         if (categoryRepository.count() == 0) {
-            categoryRepository.save(new Category(null, "A", "Fournitures scolaires", "Matériel et équipements scolaires"));
-            categoryRepository.save(new Category(null, "B", "Bibliothèque", "Livres et équipements de bibliothèque"));
-            categoryRepository.save(new Category(null, "C", "Laboratoire", "Équipements de laboratoire et scientifiques"));
+            categoryRepository.save(new Category(null, "A", "التجهيزات والأدوات المدرسية", "يخصص للتجهيزات والأدوات المدرسية (كراسي- طاولات- مكاتب- مقاعد..)"));
+            categoryRepository.save(new Category(null, "B", "الخزانة المدرسية", "للخرالة المدرسية من كتب مدرسية وترفيهية ومجلات ووثائق دراسية."));
+            categoryRepository.save(new Category(null, "C", "المختبرات", "خاص بالمختبرات سواء تعلق الأمر بتجهيرات مادة علوم الأرص والحياة أو العلوم الميريائية أو عيرها."));
+            categoryRepository.save(new Category(null, "D", "أدوات التعليم العام", "يخصص لأدوات التعليم العام، من أدوات وتجهيزات تعليمية تتعلق بتدريس مختلف مواد التعليمالعام."));
+            categoryRepository.save(new Category(null, "I", "مواد و تجهيزات القسم الداخلي", "يحصص للمواد والتجهيزات المتعلقة القسم الداخلي."));
+
+
+
         }
     }
 }

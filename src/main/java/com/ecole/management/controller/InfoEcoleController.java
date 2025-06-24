@@ -1,10 +1,8 @@
 package com.ecole.management.controller;
 
 import com.ecole.management.model.InfoEcole;
-import com.ecole.management.model.User;
 import com.ecole.management.service.InfoEcoleService;
 import com.ecole.management.service.SecurityService;
-import com.ecole.management.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -24,34 +21,32 @@ public class InfoEcoleController {
 
     private final InfoEcoleService infoEcoleService;
     private final SecurityService securityService;
-    private final UserService userService;
-
 
     @GetMapping
     public String listEcoles(Model model) {
-        User currentUser = userService.getCurrentUser();
-        if (currentUser != null) {
-            model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
-            model.addAttribute("userHasEcole", infoEcoleService.userHasEcole(currentUser));
-        } else {
-            model.addAttribute("ecoles", List.of());
-            model.addAttribute("userHasEcole", false);
-        }
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+/*
+        if (!securityCheck.isAuthorized()) {
+            return "redirect:/login";
+        }*/
+
+        model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(securityCheck.getUser()));
+        model.addAttribute("userHasEcole", securityCheck.hasSchool());
+
         return "ecoles/list";
     }
 
-
     @GetMapping("/new")
     public String showNewEcoleForm(Model model, RedirectAttributes redirectAttributes) {
-        User currentUser = userService.getCurrentUser();
-
-        if (currentUser == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vous devez être connecté pour créer une école");
+        SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
+/*
+        if (!securityCheck.isAuthorized()) {
             return "redirect:/login";
         }
-
-        if (infoEcoleService.userHasEcole(currentUser)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vous avez déjà créé une école. Chaque utilisateur ne peut créer qu'une seule école.");
+*/
+        if (securityCheck.hasSchool()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Vous avez déjà créé une école. Chaque utilisateur ne peut créer qu'une seule école.");
             return "redirect:/ecoles";
         }
 
@@ -123,11 +118,11 @@ public class InfoEcoleController {
                             RedirectAttributes redirectAttributes,
                             Model model) {
         SecurityService.SecurityCheck securityCheck = securityService.checkUserAccess();
-
+/*
         if (!securityCheck.isAuthorized()) {
             return "redirect:/login";
         }
-
+*/
         if (result.hasErrors()) {
             model.addAttribute("errorMessage", "Veuillez corriger les erreurs dans le formulaire");
             return "ecoles/form";

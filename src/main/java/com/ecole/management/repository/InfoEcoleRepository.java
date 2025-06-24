@@ -22,6 +22,7 @@ public interface InfoEcoleRepository extends JpaRepository<InfoEcole, Long> {
     // Vérifier si utilisateur a déjà une école
     boolean existsByUser(User user);
 
+
     // Vérifier si établissement existe déjà (pour éviter doublons)
     boolean existsByEtablissement(String etablissement);
 

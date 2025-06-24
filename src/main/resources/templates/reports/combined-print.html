@@ -208,7 +208,7 @@
             <span th:text="${suppression.equipment.category.name}"></span>
         </td>
         <td th:text="${suppression.designation}"></td>
-        <td th:text="${#numbers.formatDecimal(suppression.prixUnitaire, 1, 2) + ' DH'}"></td>
+        <td th:text="${#numbers.formatDecimal(suppression.prix_unitaire, 1, 2) + ' DH'}"></td>
         <td th:text="${#dates.format(suppression.dateSuppression, 'dd/MM/yyyy')}"></td>
         <td th:text="${suppression.motifSuppression}"></td>
         <td th:text="${suppression.responsable ?: 'N/A'}"></td>
@@ -218,7 +218,7 @@
     <tfoot th:if="${!suppressions.empty}">
     <tr style="background-color: #f8d7da;">
         <td colspan="3" class="fw-bold" style="text-align: right;">Sous-total Supprimés:</td>
-        <td class="fw-bold" th:text="${#numbers.formatDecimal(#aggregates.sum(suppressions.![prixUnitaire != null ? prixUnitaire : 0]), 1, 2) + ' DH'}"></td>
+        <td class="fw-bold" th:text="${#numbers.formatDecimal(#aggregates.sum(suppressions.![prix_unitaire != null ? prix_unitaire : 0]), 1, 2) + ' DH'}"></td>
         <td colspan="4"></td>
     </tr>
     </tfoot>

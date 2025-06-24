@@ -46,10 +46,10 @@
                         <td th:text="${ecole.nomDuPresident}" data-sort="president"></td>
                         <td>
                             <div class="d-flex gap-2">
-                                <a th:href="@{/ecoles/{id}(id=${ecole.etablissement})}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Voir détails">
+                                <a th:href="@{/ecoles/{id}(id=${ecole.id})}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Voir détails">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a th:href="@{/ecoles/edit/{id}(id=${ecole.etablissement})}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Modifier">
+                                <a th:href="@{/ecoles/edit/{id}(id=${ecole.id})}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <!-- Fixed delete button using data attributes -->
@@ -57,11 +57,11 @@
                                    class="btn btn-sm btn-danger delete-btn"
                                    data-bs-toggle="tooltip"
                                    title="Supprimer"
-                                   th:data-delete-url="@{/ecoles/delete/{id}(id=${ecole.etablissement})}"
-                                   th:data-etablissement="${ecole.etablissement}">
+                                   th:data-delete-url="@{/ecoles/delete/{id}(id=${ecole.id})}"
+                                   th:data-etablissement="${ecole.id}">
                                     <i class="fas fa-trash"></i>
                                 </a>
-                                <a th:href="@{/equipements/etablissement/{id}(id=${ecole.etablissement})}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="Voir équipements">
+                                    <a th:href="@{/equipements/etablissement/{id}(id=${ecole.etablissement})}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="Voir équipements">
                                     <i class="fas fa-boxes"></i>
                                 </a>
                             </div>
