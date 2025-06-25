@@ -248,6 +248,7 @@ public class EquipmentController {
         EquipmentFormDTO equipmentForm = EquipmentFormDTO.fromEquipment(equipment);
 
         model.addAttribute("equipmentForm", equipmentForm);
+        model.addAttribute("equipement", equipment);
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("ecoles", infoEcoleService.getEcolesForCurrentUser(currentUser));
         model.addAttribute("isEdit", true);
